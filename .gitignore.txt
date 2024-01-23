@@ -1,0 +1,7 @@
+\CoRegBreastMRI\*
+\CoRegBreastMRI_resources\*
+\Data\*
+\Export\*
+\elastix\*
+\parametric_file\*
+\TempFile\*
