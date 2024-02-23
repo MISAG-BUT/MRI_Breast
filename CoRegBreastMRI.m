@@ -176,8 +176,8 @@ for dyn = 2:vel(2)
     multiWaitbar('Read data','Relabel','Registration');
     multiWaitbar('Registration','Value',2/5);
 
-    % PF_name = [ctfroot '\CoRegBreastM' '\parametric_file\BSpline_custom.txt' ];
-    PF_name = ['parametric_file\BSpline_custom.txt' ];
+    PF_name = [ctfroot '\CoRegBreastM' '\parametric_file\BSpline_custom.txt' ];
+    % PF_name = ['parametric_file\BSpline_custom.txt' ];
 
 %     disp(ctfroot)
 %     disp(matlabroot)
@@ -190,8 +190,8 @@ for dyn = 2:vel(2)
     mat2raw_3D(maskB,tempFile,'maskB',[InfoM.PixelSpacings(1,:), InfoM.PatientPositions(2,3)-InfoM.PatientPositions(1,3)] )
     
     
-    % CMD = [ ctfroot '\CoRegBreastM' '\elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
-    CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
+    CMD = [ ctfroot '\CoRegBreastM' '\elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
+    % CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
 
     %     CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ];
     system(CMD)
@@ -209,12 +209,14 @@ for dyn = 2:vel(2)
 %     
 %     % imshow5(registered)
 %     
-    slice = floor(size(registered,3)/5*2);
-    figure
-    subplot 121
-    imshowpair(dataR(:,:,slice),dataM(:,:,slice))
-    subplot 122
-    imshowpair(dataR(:,:,slice),registered(:,:,slice))
+
+    % slice = floor(size(registered,3)/5*2);
+    % figure
+    % subplot 121
+    % imshowpair(dataR(:,:,slice),dataM(:,:,slice))
+    % subplot 122
+    % imshowpair(dataR(:,:,slice),registered(:,:,slice))
+
 % 
 %     print([path_save filesep 'img_dyn_' num2str(dyn) '.png'],'-dpng')
 %     close all
