@@ -4,6 +4,5 @@ Data
 Data_test
 Export
 elastix
-parametric_file
 TempFile
 *.mat
