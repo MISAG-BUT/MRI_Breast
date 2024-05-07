@@ -1,6 +1,6 @@
-function [collection,vel] = dicoms_info(path)
+function [collection,vel] = dicoms_info(path,name_find)
 
-D = dir([path '\I*']);
+D = dir([path '\' name_find ]);
 k=1;
 
 collection=table('Size',[size(D,1),1],'VariableNames',{'FileName'},'VariableTypes',{'string'});
@@ -11,12 +11,15 @@ multiWaitbar('Loading dicom info', 'Increment', 1/length(D));
 
 for i = 1:length(D)
     p = dicominfo( fullfile(D(i).folder,D(i).name) );
-    if isfield(p,'ImageOrientationPatient')     
+    if isfield(p,'SliceLocation')     
         collection{k,'FileName'} =  string( fullfile(D(i).folder,D(i).name));
         collection{k,'SliceLocation'} =  p.SliceLocation;
         AcquisitionTime = p.AcquisitionTime; 
         AcquisitionTime = AcquisitionTime(1:findstr(AcquisitionTime,'.')+2);
-        collection{k,'AcquisitionTime'} =  AcquisitionTime;
+        if isempty(AcquisitionTime)
+            AcquisitionTime = p.AcquisitionTime;
+        end
+        collection{k,'AcquisitionTime'} = AcquisitionTime;
         collection{k,'Info'} =  {p};
         k=k+1;
     end

@@ -35,6 +35,7 @@ if ~isempty(R)
 end
 
 D = dir([path_data '\**\I*']);
+% D = dir([path_data '\**\1-*']);
 D = unique({D.folder});
 P = split(D{1},'\');
 P = fullfile(P{1:end-2});
@@ -88,11 +89,7 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
 
 [collection,vel] = dicoms_info(path_3);
 % save('collection.mat','collection','vel')
-
 % load('collection.mat')
-
-
-%%
 
 %% saving Orig dicom
 
@@ -105,7 +102,6 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
     dataR = squeeze(dataR);    
 
     maskA =  uint8(dataR>10);
-%     maskA = bwareaopen(maskA,100);
 
 %     path_save_1 = [path_save filesep 'orig_dyn_'  num2str(1)];
     path_save_1 = [path_save filesep 'orig_dyn'];
@@ -139,6 +135,15 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
     end
 
     multiWaitbar('Resaving dynamic data', 'Close');
+
+%% breast segmentation    
+
+multiWaitbar('Breast segmentation','Value',0.0);
+multiWaitbar('Breast segmentation','Value',0.2);
+[s, ~, ~] = segmentation_breast(dataR,[collection.Info{1}.PixelSpacing(1),collection.Info{1}.PixelSpacing(1),collection.Info{1}.PixelSpacing(1)]);
+multiWaitbar('Breast segmentation','Value', 0.8);
+multiWaitbar('Breast segmentation','Close');
+
 
 %% registrace dynamik
 %     multiWaitbar('Resaving dynamic data', 'Relabel', ['Registration of 1 dynamics']);
