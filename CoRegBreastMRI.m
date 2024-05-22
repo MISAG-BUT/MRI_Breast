@@ -64,6 +64,7 @@ multiWaitbar( 'CloseAll' );
 multiWaitbar(['Patient: 0 from ' num2str(length(D))], 'Increment', 1/length(D));
 
 %%
+
 for pat = 1:length(D)
 
 multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
@@ -99,7 +100,7 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
 
     col = collection(collection.Dyn==1,:);    
     [dataR,InfoR]=dicomreadVolume(col.FileName);
-    dataR = squeeze(dataR);    
+    dataR = squeeze(dataR);
 
     maskA =  uint8(dataR>10);
 
@@ -138,12 +139,19 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
 
 %% breast segmentation    
 
-multiWaitbar('Breast segmentation','Value',0.0);
-multiWaitbar('Breast segmentation','Value',0.2);
-[s, ~, ~] = segmentation_breast(dataR,[collection.Info{1}.PixelSpacing(1),collection.Info{1}.PixelSpacing(1),collection.Info{1}.PixelSpacing(1)]);
-multiWaitbar('Breast segmentation','Value', 0.8);
-multiWaitbar('Breast segmentation','Close');
+% multiWaitbar('Breast segmentation','Value',0.0);
+multiWaitbar('Breast segmentation','Value',0.3);
 
+
+
+multiWaitbar('Breast segmentation','Value', 0.9);
+pasuse(0.5)
+
+filenameTxt = [ path_save filesep 'Breast_sizes.txt'];
+
+% appendNumbersToTxt(s(1), s(2), filenameTxt, 'Dyn_0 - ')
+
+multiWaitbar('Breast segmentation','Close');
 
 %% registrace dynamik
 %     multiWaitbar('Resaving dynamic data', 'Relabel', ['Registration of 1 dynamics']);

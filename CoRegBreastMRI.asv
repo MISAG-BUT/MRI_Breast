@@ -35,11 +35,12 @@ if ~isempty(R)
 end
 
 D = dir([path_data '\**\I*']);
+% D = dir([path_data '\**\1-*']);
 D = unique({D.folder});
 P = split(D{1},'\');
 P = fullfile(P{1:end-2});
 
-D =  dir([P]);
+D =  dir(P);
 D(1:2)=[];
 D = D([D.isdir]);
 
@@ -48,7 +49,15 @@ D = D([D.isdir]);
 
 % uiwait(msgbox(['There were found ' num2str(length(D)) ' patient folders'],"Number of patients","warn"));
 
-answ = questdlg(['There were found ' num2str(length(D)) ' patient folders. Would you like run the program?'],"Number of patients",'Yes','Cancel','Yes');
+answ = questdlg(['There were found ' num2str(length(D)) ' patient folders. Would you like to run the program?'],"Number of patients",'Yes','Cancel','Yes');
+if isempty(answ)
+    return
+else
+    switch answ
+        case 'Cancel'
+            return
+    end
+end
 
 % h = waitbar(0,['Patient 1 from ' num2str(length(D))]);
 multiWaitbar( 'CloseAll' );
@@ -80,11 +89,7 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
 
 [collection,vel] = dicoms_info(path_3);
 % save('collection.mat','collection','vel')
-
 % load('collection.mat')
-
-
-%%
 
 %% saving Orig dicom
 
@@ -97,7 +102,6 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
     dataR = squeeze(dataR);    
 
     maskA =  uint8(dataR>10);
-%     maskA = bwareaopen(maskA,100);
 
 %     path_save_1 = [path_save filesep 'orig_dyn_'  num2str(1)];
     path_save_1 = [path_save filesep 'orig_dyn'];
@@ -131,6 +135,20 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
     end
 
     multiWaitbar('Resaving dynamic data', 'Close');
+
+%% breast segmentation    
+
+% multiWaitbar('Breast segmentation','Value',0.0);
+multiWaitbar('Breast segmentation','Value',0.3);
+[s, ~, ~] = segmentation_breast(dataR,[collection.Info{1}.PixelSpacing(1),collection.Info{1}.PixelSpacing(1),collection.Info{1}.PixelSpacing(1)]);
+multiWaitbar('Breast segmentation','Value', 0.9);
+pasuse(0.5)
+
+filenameTxt = [ path_save filesep 'Breast_sizes.txt'];
+
+% appendNumbersToTxt(s(1), s(2), filenameTxt, 'Dyn_0 - ')
+
+multiWaitbar('Breast segmentation','Close');
 
 %% registrace dynamik
 %     multiWaitbar('Resaving dynamic data', 'Relabel', ['Registration of 1 dynamics']);
@@ -169,7 +187,7 @@ for dyn = 2:vel(2)
     multiWaitbar('Registration','Value',2/5);
 
     PF_name = [ctfroot '\CoRegBreastM' '\parametric_file\BSpline_custom.txt' ];
-%     PF_name = ['BSpline_custom.txt' ];
+    % PF_name = ['parametric_file\BSpline_custom.txt' ];
 
 %     disp(ctfroot)
 %     disp(matlabroot)
@@ -183,7 +201,7 @@ for dyn = 2:vel(2)
     
     
     CMD = [ ctfroot '\CoRegBreastM' '\elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
-%     CMD = ['elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
+    % CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
 
     %     CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ];
     system(CMD)
@@ -201,23 +219,25 @@ for dyn = 2:vel(2)
 %     
 %     % imshow5(registered)
 %     
-%     slice = floor(vel(1)/2);
-%     figure
-%     subplot 121
-%     imshowpair(dataR(:,:,slice),dataM(:,:,slice))
-%     subplot 122
-%     imshowpair(dataR(:,:,slice),registered(:,:,slice))
+
+    % slice = floor(size(registered,3)/5*2);
+    % figure
+    % subplot 121
+    % imshowpair(dataR(:,:,slice),dataM(:,:,slice))
+    % subplot 122
+    % imshowpair(dataR(:,:,slice),registered(:,:,slice))
+
 % 
 %     print([path_save filesep 'img_dyn_' num2str(dyn) '.png'],'-dpng')
 %     close all
 
     % figure(6)
     % subplot 131
-    % imshow(dataR(:,:,100),[])
+    % imshow(dataR(:,:,slice),[])
     % subplot 132
-    % imshow(dataM(:,:,100),[])
+    % imshow(dataM(:,:,slice),[])
     % subplot 133
-    % imshow(registered(:,:,100),[])
+    % imshow(registered(:,:,slice),[])
     % 
     % figure(7)
     % imshowpair(dataM(:,:,50),registered(:,:,50))

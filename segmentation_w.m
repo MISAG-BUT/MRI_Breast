@@ -66,11 +66,11 @@ else
 end
 
 % h = waitbar(0,['Patient 1 from ' num2str(length(D))]);
-% multiWaitbar( 'CloseAll' );
+multiWaitbar( 'CloseAll' );
 % multiWaitbar(['Patient: 0 from ' num2str(length(D))], 'Increment', 1/length(D));
 
 %%
-for pat = 1:length(D)
+for pat = 1 :length(D)
 
 % multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
 % multiWaitbar(['Patient: ' num2str(pat) ' from ' num2str(length(D))], 'Value', (pat-1)/length(D));
