@@ -1,12 +1,16 @@
 CoRegBreastMRI
 CoRegBreastMRI_resources
 Data
+data_train
 Data_test
+datat_train
 Export
 elastix
 TempFile
 *.mat
+*.nii.gz
 DeepSeA-master
 3D-Breast-FGT-and-Blood-Vessel-Segmentation
 dicm2nii
 Results
+segm_3D_unet/+trainedSynthSegModel/*

@@ -60,13 +60,13 @@ output_folder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_2';
 mkdir(output_folder)
 
 % Set target size for resizing (e.g., [128, 128, 128])
-target_size = [96,96,32];
+target_size = [128,128,64];
 
 desired_voxel_size = [2.0, 2.0, 2.0]; % 2mm x 2mm x 2mm
 
 % i = 10;
-for i =  1:length(imageFiles)
-% for i = 1:2
+% for i =  1:length(imageFiles)
+for i = 1:2
 
     %
     % Load NIfTI file
@@ -96,7 +96,7 @@ for i =  1:length(imageFiles)
     %     disp(num2str(i))
     % end
 
-    % img2 = uint16(insertMatrix(zeros([226,2],"uint16"),img2));
+    img2 = uint16(insertMatrix(zeros(target_size,"uint16"),img2));
 
     p = single(prctile(img2(img2>0),95,"all"));
 
@@ -108,7 +108,7 @@ for i =  1:length(imageFiles)
     % img2 = uint16(rescale(img2)*5000);
 
     % mask2 = imresize3(mask2, target_size, "nearest");
-    % mask2 = uint8(insertMatrix(zeros(target_size,"uint8"),mask2));
+    mask2 = uint8(insertMatrix(zeros(target_size,"uint8"),mask2));
 
     % imfuse5(img2, mask2)
 
@@ -125,10 +125,6 @@ for i =  1:length(imageFiles)
     x = linspace(1, size(img2,1)-target_size(1), numsIm(1));
     y = linspace(1, size(img2,2)-target_size(2), numsIm(2));
     z = linspace(1, size(img2,3)-target_size(3), numsIm(3));
-
-    x(x<1)=[];
-    y(y<1)=[];
-    z(z<1)=[];
 
 
     %% saving
@@ -186,7 +182,6 @@ for i =  1:length(imageFiles)
 
                 % figure(1)
                 % imshow(sIm(:,:,16),[])
-
                 numID = numID+1;
             end
         end

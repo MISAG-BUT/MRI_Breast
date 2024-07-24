@@ -3,7 +3,7 @@
 function [s, mask1,maskA] = segmentation_breast(dataR,pixelSize)
 
 level = graythresh(dataR/max(dataR(:))) * max(dataR(:));
-maskA =  uint8(dataR>(level));
+maskA =  logical(dataR>(level));
 
 maskA = imclose(logical(maskA),strel("cube",1));
 

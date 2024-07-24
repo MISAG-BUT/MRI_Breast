@@ -23,18 +23,13 @@ dataR2 = ( rescale(dataR2,"InputMin",0,"InputMax",quantile(dataR(:),0.98)) *2500
 % Perform prediction
 pred = predict(net, dataR2);
 
-% mask = imresize3(pred(:,:,:,2)>0.5, vel,"nearest");
+mask = imresize3(pred(:,:,:,2)>0.5, vel,"nearest");
 
-mask = pred(:,:,:,2)>0.5;
+% mask = pred(:,:,:,2)>0.5;
 % mask = imopen(mask,create_sphere(1));
 % mask = imopen(mask,create_sphere(2));
 mask = imclose(mask,create_sphere(1));
 % mask = imclose(mask,create_sphere(2));
-mask = imopen(mask,create_sphere(1));
-
-mask(:,62:end,:)=0;
-niftiwrite(uint8(mask),'S:\MRI_Breast\data_train\NIFTI_Files_own\resized_Brest_MRI2_001_mask','Compressed', true)
-
 
 %% visualization
 figure

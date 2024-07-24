@@ -3,11 +3,11 @@ clear all
 close all
 clc
 
-% path_data = 'D:\pro_mr_prsa\Export\DICOM';
-% D = dir([path_data '\S*']);
+path_data = 'S:\MRI_Breast\Data\Export';
+D = dir([path_data '*\**\S*']);
 
 % [path_data] = uigetdir(['S:\registrace_MRI_prs\Data']);
-[path_data] = uigetdir();
+% [path_data] = uigetdir();
 
 if path_data==0
     return
@@ -59,6 +59,10 @@ else
     end
 end
 
+multiWaitbar('Segmentation model loading...', 'Value', 0.3);
+load('model_2.mat','net')
+multiWaitbar( 'CloseAll' );
+
 % h = waitbar(0,['Patient 1 from ' num2str(length(D))]);
 multiWaitbar( 'CloseAll' );
 multiWaitbar(['Patient: 0 from ' num2str(length(D))], 'Increment', 1/length(D));
@@ -67,30 +71,30 @@ multiWaitbar(['Patient: 0 from ' num2str(length(D))], 'Increment', 1/length(D));
 
 for pat = 1:length(D)
 
-multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
-multiWaitbar(['Patient: ' num2str(pat) ' from ' num2str(length(D))], 'Value', (pat-1)/length(D));
-
-path_1 = fullfile(D(pat).folder, D(pat).name);
-DD = dir([path_1,'\S*']);
-
-path_save = fullfile( D(pat).folder, D(pat).name,  'Results');
-mkdir(path_save)
-
-lenDD=[];
-for ii = 1:length(DD)
-    path_2 = fullfile(DD(ii).folder, DD(ii).name);
-    lenDD(ii) = length(dir([path_2 '\I*']));
-end
-
-[~,m] = max(lenDD);
-path_3 = fullfile(DD(m).folder, DD(m).name);
+    multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
+    multiWaitbar(['Patient: ' num2str(pat) ' from ' num2str(length(D))], 'Value', (pat-1)/length(D));
+    
+    path_1 = fullfile(D(pat).folder, D(pat).name);
+    DD = dir([path_1,'\S*']);
+    
+    path_save = fullfile( D(pat).folder, D(pat).name,  'Results');
+    mkdir(path_save)
+    
+    lenDD=[];
+    for ii = 1:length(DD)
+        path_2 = fullfile(DD(ii).folder, DD(ii).name);
+        lenDD(ii) = length(dir([path_2 '\I*']));
+    end
+    
+    [~,m] = max(lenDD);
+    path_3 = fullfile(DD(m).folder, DD(m).name);
 
 
 %%
-
-[collection,vel] = dicoms_info(path_3);
-% save('collection.mat','collection','vel')
-% load('collection.mat')
+    
+    [collection,vel] = dicoms_info(path_3, 'I*');
+    % save('collection.mat','collection','vel')
+    % load('collection.mat')
 
 %% saving Orig dicom
 
@@ -142,9 +146,11 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
 % multiWaitbar('Breast segmentation','Value',0.0);
 multiWaitbar('Breast segmentation','Value',0.3);
 
+[s] = segmentation_breast_2(dataR,col.Info{1,1}, net);
 
+[s, mask1,maskA] = segmentation_breast(single(dataR),[col.Info{1,1}.PixelSpacing;1]');
 
-multiWaitbar('Breast segmentation','Value', 0.9);
+multiWaitbar('Breast segmentation ...','Value', 0.9);
 pasuse(0.5)
 
 filenameTxt = [ path_save filesep 'Breast_sizes.txt'];
