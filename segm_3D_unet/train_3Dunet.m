@@ -46,33 +46,29 @@ ValidData = combine(imds2, pxds2);
 
 
 %%
-% clear all
-% Define the target input size and number of classes
-InputSize = [96,96,32]; % The size that the network expects
-numClasses = 2; % Background and breast
-
-% Create 3D U-Net layers using unet3d function with a resizing layer
-encoderDepth = 2; % You can adjust this based on your requirement
-numFirstEncoderFilters = 2; % Number of output channels for first convolution layer
-
-% Define the network
-% lgraph = layerGraph();
+% % clear all
+% % Define the target input size and number of classes
+% InputSize = [96,96,32]; % The size that the network expects
+% numClasses = 2; % Background and breast
 % 
-% % % Add input layer with resizing
-% inputLayer = image3dInputLayer(targetInputSize, 'Normalization', 'zerocenter', 'Name', 'inputLayer'); % example size, use the maximum possible size of your data
-% lgraph = addLayers(lgraph, inputLayer);
-
-% Add U-Net layers
-lgraph = unet3d(InputSize, numClasses,'NumFirstEncoderFilters', numFirstEncoderFilters, 'ConvolutionPadding', 'same', 'FilterSize', 3);
-
-% % Remove the input layer of unet3d and connect to resizing layer
-% unet3dNetwork = removeLayers(unet3dNetwork, 'encoderImageInputLayer');
-% lgraph = addLayers(lgraph, unet3dNetwork.Layers);
-% lgraph = connectLayers(lgraph, 'inputLayer', 'encoderImageInputLayer');
-
-% Display the network
-figure;
-plot(lgraph);
+% % Create 3D U-Net layers using unet3d function with a resizing layer
+% encoderDepth = 3; % You can adjust this based on your requirement
+% numFirstEncoderFilters = 2; % Number of output channels for first convolution layer
+% 
+% 
+% % Add U-Net layers
+% lgraph = unet3d(InputSize, numClasses,'NumFirstEncoderFilters', numFirstEncoderFilters,'EncoderDepth',encoderDepth, 'ConvolutionPadding', 'same', 'FilterSize', 3);
+% 
+% % % Remove the input layer of unet3d and connect to resizing layer
+% % unet3dNetwork = removeLayers(unet3dNetwork, 'encoderImageInputLayer');
+% % lgraph = addLayers(lgraph, unet3dNetwork.Layers);
+% % lgraph = connectLayers(lgraph, 'inputLayer', 'encoderImageInputLayer');
+% 
+% % Display the network
+% % figure;
+% % plot(lgraph);
+% 
+% save('Unet3d.mat',"lgraph")
 
 
 %%
@@ -127,10 +123,13 @@ plot(lgraph);
 % % lgraph = connectLayers(lgraph,"unet_conv_uparm_8_1","concat5/in1");
 % % lgraph = connectLayers(lgraph,"unet_input","concat5/in2");
 % 
-% save('Unet3d.mat',"lgraph")
+% save('Unet3dBrain.mat',"lgraph")
 
 %% 
-load('Unet3d.mat',"lgraph")
+% load('Unet3dBrain.mat',"lgraph")
+% load('Unet3d.mat',"lgraph")
+
+lgraph = load('model_2_0.mat','net').net;
 
 %% Data Augmentation
 
@@ -151,9 +150,9 @@ function dataOut = augmentData(data)
         dataOut{2} = flip(dataOut{2}, 3); % Flip label
     end
 
-    if rand < 0.35
-        dataOut{1} = uint16( ((single(dataOut{1})/500).^(randn(1)*0.05+1))*500);
-    elseif rand > 0.65
+    if rand < 0.4
+        dataOut{1} = uint16( ((single(dataOut{1})/500).^(randn(1)*0.2+1))*500);
+    elseif rand > 0.7
         dataOut{1} = uint16( single(dataOut{1})*(randn(1)*0.2+1));
     end
 
@@ -175,11 +174,11 @@ trainingData = transform(trainingData, @(data) augmentData(data));
 
 % Define training options
 options = trainingOptions('adam', ...
-    'MaxEpochs', 50, ...
+    'MaxEpochs', 30, ...
     'Metrics','fscore',...
     'ResetInputNormalization',true,...
-    'InitialLearnRate', 1e-3, ...
-    'MiniBatchSize', 8, ...
+    'InitialLearnRate', 1e-4, ...
+    'MiniBatchSize', 4, ...
     'LearnRateSchedule','piecewise', ...
     'Plots', 'training-progress', ...
     'ValidationData', ValidData, ...
@@ -187,25 +186,38 @@ options = trainingOptions('adam', ...
     'ValidationFrequency',100, ...
     'Shuffle', 'every-epoch');
 
-% Train the network
-[net, info] = trainnet(trainingData, lgraph, 'binary-crossentropy', options);
+function [loss] = MyLoss( Y, targets) 
+% lossFcn = @(Y1,Y2,T1,T2) crossentropy(Y1,T1) + mse(Y2,T2);
 
-save('model_1.mat',"net","info")
+    sAB = targets(:,:,1,:) .* Y(:,:,1,:);
+    mAB = targets(:,:,1,:).sum('all') + Y(:,:,1,:).sum('all');
+    loss = 1 - ((2*(sAB.sum('all'))) / mAB);
+    % w1 = mean(targets(:,:,1,:),[1,2]);
+    % w2 = mean(targets(:,:,2,:),[1,2]);
+    % loss = -sum(  w1.*targets(:,:,1,:).*log(Y(:,:,1,:)) + w2.*(1-targets).*log(1-Y) ,'all');
+end
+
+% Train the network
+[net, info] = trainnet(trainingData, lgraph, @MyLoss, options);
+
+description = 'pokus na douceni, z model2_0, nove loss Dice';
+
+save('model_2_1.mat',"net","info","description")
 
 
 %% Prediction
-
-niftiFilePath = imageFilePaths{1720};
-
-niftiInfo = niftiinfo(niftiFilePath);
-niftiData = niftiread(niftiFilePath);
-
-% Resize the input data to match the network's input size
-% inputData = imresize3(niftiData, InputSize(1:3));
-niftiData = single(niftiData); % Ensure the data is single precision
-% inputData = rescale(inputData); % Normalize the input data
-
-% Perform prediction
-prediction = predict(net, niftiData);
-
-imfuse5(niftiData, prediction(:,:,:,2)>0.5)
+% 
+% niftiFilePath = imageFilePaths{100};
+% 
+% niftiInfo = niftiinfo(niftiFilePath);
+% niftiData = niftiread(niftiFilePath);
+% 
+% % Resize the input data to match the network's input size
+% % inputData = imresize3(niftiData, InputSize(1:3));
+% niftiData = single(niftiData); % Ensure the data is single precision
+% % inputData = rescale(inputData); % Normalize the input data
+% 
+% % Perform prediction
+% prediction = predict(net, niftiData);
+% 
+% imfuse5(niftiData, prediction(:,:,:,2)>0.5)

@@ -1,0 +1,60 @@
+%% predickce celych prsou
+
+clear all
+close all
+clc
+
+% read model
+trainedNet = load('model_2.mat','net').net;
+
+%%
+niftiFilePath = 'S:\MRI_Breast\data_train\NIfTI_Files\Breast_MRI_002\ax_3d_dyn.nii.gz';
+
+nii_info = niftiinfo(niftiFilePath);
+niftiData = niftiread(niftiFilePath);
+
+
+%% data preprocessing
+
+target_size = [96,96,32];
+desired_voxel_size = [2.0, 2.0, 2.0]; % 2mm x 2mm x 2mm
+
+current_voxel_size = nii_info.PixelDimensions;
+
+T = nii_info.Transform.T;
+[img, T_new] = transfToUnit(niftiData, T, current_voxel_size, desired_voxel_size);
+
+p = single(prctile(img(img>0),95,"all"));
+img = uint16((double(img)/p)*500);
+
+
+%% splitting and prediction
+
+prct = 0.75;
+numsIm = [ceil(size(img,1) / (target_size(1)*prct)),ceil(size(img,2) / (target_size(2)*prct)),ceil(size(img,3) / (target_size(3)*prct))];
+
+x = linspace(1, size(img,1)-target_size(1), numsIm(1));
+y = linspace(1, size(img,2)-target_size(2), numsIm(2));
+z = linspace(1, size(img,3)-target_size(3), numsIm(3));
+
+x(x<1)=[];
+y(y<1)=[];
+z(z<1)=[];
+
+pred_mask = zeros();
+
+for ra = 1:length(x)
+    for sl = 1:length(y)
+        for Z = 1:length(z)
+            indX = x(ra):x(ra)+target_size(1)-1;
+            indY = y(sl):y(sl)+target_size(2)-1;
+            indZ = z(Z):z(Z)+target_size(3)-1;
+            sIm = img(indX, indY, indZ);
+
+            prediction = predict(trainedNet, single(sIm));
+
+            
+            
+        end
+    end
+end
