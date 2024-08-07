@@ -60,9 +60,9 @@ output_folder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_2';
 mkdir(output_folder)
 
 % Set target size for resizing (e.g., [128, 128, 128])
-target_size = [96,96,32];
+target_size = [96,96,96];
 
-desired_voxel_size = [2.0, 2.0, 2.0]; % 2mm x 2mm x 2mm
+desired_voxel_size = [1.0, 1.0, 1.0]; % 2mm x 2mm x 2mm
 
 % i = 10;
 for i =  1:length(imageFiles)
@@ -73,21 +73,59 @@ for i =  1:length(imageFiles)
     nii_path = fullfile(imageFiles(i).folder, imageFiles(i).name);
     nii_path_mask = fullfile(maskFiles(i).folder, maskFiles(i).name);
 
-    img = niftiread(nii_path);
-    mask = nrrdread(nii_path_mask);
-    nii_info = niftiinfo(nii_path);
-    nii_info2 = nrrdinfo(nii_path_mask);
+    medVol = medicalVolume(nii_path);
+    info = niftiinfo(nii_path)
 
-    current_voxel_size = nii_info.PixelDimensions;
-    current_voxel_size_mask = nii_info2.PixelDimensions;
+    % R = medicalref3d(size(mediVol.Voxels),mediVol.VolumeGeometry.Position, mediVol.VolumeGeometry.VoxelDistances);
+    % R = medicalref3d(size(mediVol.Voxels),mediVol.VolumeGeometry.Position, mediVol.VolumeGeometry.PixelSpacing,  mediVol.NormalVector);
 
-    T = nii_info.Transform.T;
-    % T(:,[1,2]) = T(:,[2,1]);
-    [img2, T_new] = transfToUnit(img, T, current_voxel_size, desired_voxel_size);
+    [newVol] = resample_data(medVol, desired_voxel_size);
 
-    A = nii_info2.SpatialMapping.A';
-    A(:,[1,2]) = A(:,[2,1]);
-    [mask2, T_new_mask] = transfToUnit(mask, A, current_voxel_size_mask, desired_voxel_size);
+    R = newVol.VolumeGeometry;
+    R = orient(R,'LPS+');
+
+    tform = intrinsicToWorldMapping(R);
+    img2 = imwarp(newVol.Voxels,invert(tform));
+    
+    VolumeGeometry = medicalref3d(size(img2),tform);
+    newVol = medicalVolume(img2,VolumeGeometry);
+
+    path_save = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_3';
+
+    medVol.write([path_save filesep 'orig.nii.gz'])
+
+    write(newVol,[path_save filesep 'resampled.nii.gz'])
+
+    % imshow5(img,50)
+    % imshow5(img2,50)
+    
+    % medVolResampled = resample(medVol,R);
+    % % 
+    % % % imshow5(img)
+
+    % imshow5(medVol.Voxels,50)
+    % imshow5(newVol.Voxels,50)
+
+
+    %%
+    % sliceViewer(medVolResampled,Parent=figure)
+
+
+    % img = niftiread(nii_path);
+    % mask = nrrdread(nii_path_mask);
+    % nii_info = niftiinfo(nii_path);
+    % nii_info2 = nrrdinfo(nii_path_mask);
+    % 
+    % current_voxel_size = nii_info.PixelDimensions;
+    % current_voxel_size_mask = nii_info2.PixelDimensions;
+
+    % T = nii_info.Transform.T;
+    % % T(:,[1,2]) = T(:,[2,1]);
+    % [img2, T_new] = transfToUnit(img, T, current_voxel_size, desired_voxel_size);
+    % 
+    % A = nii_info2.SpatialMapping.A';
+    % A(:,[1,2]) = A(:,[2,1]);
+    % [mask2, T_new_mask] = transfToUnit(mask, A, current_voxel_size_mask, desired_voxel_size);
 
     % disp(size(mask2))
     % disp(size(img2))

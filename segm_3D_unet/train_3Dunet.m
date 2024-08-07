@@ -137,17 +137,25 @@ lgraph = load('model_2_0.mat','net').net;
 function dataOut = augmentData(data)
     dataOut = data;
     % Apply random reflection
-    if rand > 0.5
+    if rand > 0.3
         dataOut{1} = flip(dataOut{1}, 1); % Flip image
         dataOut{2} = flip(dataOut{2}, 1); % Flip label
     end
-    if rand > 0.5
+    if rand > 0.3
         dataOut{1} = flip(dataOut{1}, 2); % Flip image
         dataOut{2} = flip(dataOut{2}, 2); % Flip label
     end
-    if rand > 0.5
+    if rand > 0.3
         dataOut{1} = flip(dataOut{1}, 3); % Flip image
         dataOut{2} = flip(dataOut{2}, 3); % Flip label
+    end
+
+    angles = [180, 90, -90, -180];
+    if rand > 0.75
+        direction = randperm(3)==3;
+        angle = angles(randi(2));
+        dataOut{1} = imrotate3(dataOut{1},angle,direction); % Flip image
+        dataOut{2} =  imrotate3(dataOut{2},angle,direction); % Flip label
     end
 
     if rand < 0.4
@@ -174,7 +182,7 @@ trainingData = transform(trainingData, @(data) augmentData(data));
 
 % Define training options
 options = trainingOptions('adam', ...
-    'MaxEpochs', 30, ...
+    'MaxEpochs', 5, ...
     'Metrics','fscore',...
     'ResetInputNormalization',true,...
     'InitialLearnRate', 1e-4, ...
@@ -200,9 +208,9 @@ end
 % Train the network
 [net, info] = trainnet(trainingData, lgraph, @MyLoss, options);
 
-description = 'pokus na douceni, z model2_0, nove loss Dice';
+description = 'pokus o nove douceni pro vsechny rotace, z model2_0, a take nove na loss Dice';
 
-save('model_2_1.mat',"net","info","description")
+save('segm_3D_unet\model_2_2.mat',"net","info","description")
 
 
 %% Prediction

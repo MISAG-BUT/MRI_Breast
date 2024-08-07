@@ -5,9 +5,9 @@ vel = size(data);
 % center = (size(data) + 1) / 2;
 
 % T = diag([1./current_voxel_size 1]) * T;
+% T = inv(diag([desired_voxel_size 1])) * T;
+T = inv(diag([desired_voxel_size 1])) * (T);
 
-
-T = inv(diag([desired_voxel_size 1])) * T;
 T(4,1:3)=0;
 
 % T(4,1:3) = T(4,1:3) - center;
@@ -23,7 +23,7 @@ data = imwarp(data, tform);
 scale_factors = current_voxel_size ./ desired_voxel_size;
 new_size = round(vel .* scale_factors);
 
-data = int16(insertMatrix(zeros(new_size,'int16'),data));
+data = int16( insertMatrix(zeros(new_size,'int16'),data, ceil(new_size./2)-1) );
 
 % data = imresize3(data, new_size);
 
