@@ -25,14 +25,21 @@ maskds = maskds(1:splitnum-1);
 
 inputSize = [256, 256, 1];
 
-net = load('trainedUNet_3_0.mat','net').netBest;
-% net = load('trainedUNet_3_0.mat','net').net;
+%%
+% net = load('trainedUNet_3_2.mat','netBest').netBest;
+net = load('trainedUNet_3_2.mat','net').net;
 
 
 %%
-numImg = 1;
+numImg = 8;
 
-data = niftiread([imgds(numImg).folder filesep imgds(numImg).name]);
+% ds = imgds;
+% dsm = maskds;
+
+ds = imgdsVal;
+dsm = maskdsVal;
+
+data = niftiread([ds(numImg).folder filesep ds(numImg).name]);
 mask = zeros(size(data));
 for slice = 1:size(data,3)
     img = data(:,:,slice);    
@@ -61,4 +68,4 @@ end
 maskThr = mask>0.5;
 
 imfuse5(data,maskThr)
-imshow5(maskThr)
+% imshow5(mask)

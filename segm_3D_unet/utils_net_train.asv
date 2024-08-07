@@ -14,23 +14,28 @@ classdef utils_net_train
     end
 
     function [loss] = BinEntropLoss( Y, targets) 
+        w1 = targets(:,:,1,:).mean([1,2]);
+        w2 = 1-w1;
         loss = -sum(  w1.*targets(:,:,1,:).*log(Y(:,:,1,:)) + w2.*(1-targets).*log(1-Y) ,'all');
     end
 
     function [loss] = generalizedDiceLoss( Y, targets) 
         targets(isnan(targets)) = 0;
         Y(isnan(Y)) = 0;
-
         targets(:,:,2,:) = 1-targets(:,:,1,:);
-        loss = 1 - generalizedDice(targets, Y);
+        GD = generalizedDice(targets, Y);
+        loss = 1 - GD.mean('all');
     end
     
-    function [loss,gradients] = modelLoss(net,X,T)
-        % Forward data through network.
+    function [loss,gradients,Acc] = modelLoss(net,X,T)
+        % % Forward data through network.
         [Y] = forward(net,X);
-        % Calculate cross-entropy loss.
-        loss = utils_net_train.DiceLoss(Y,T);
-        % Calculate gradients of loss with respect to learnable parameters.
+        % % Calculate cross-entropy loss.
+        % loss = utils_net_train.DiceLoss(Y,T);
+        % Acc = 1 - utils_net_train.generalizedDiceLoss(Y,T);
+        loss = utils_net_train.generalizedDiceLoss(Y,T);
+        Acc = 1 - utils_net_train.DiceLoss(Y,T);
+        % % Calculate gradients of loss with respect to learnable parameters.
         gradients = dlgradient(loss,net.Learnables);
     end
     
@@ -45,37 +50,44 @@ classdef utils_net_train
         %     rect(2) = rectY;
     end
     
-    function [img, mask] = augment_transf(img, mask)
-        if rand > 0.5
+    function [img, mask] = augment_transf(img, mask, state)
+        if state(1) > 0.5
             img = flip(img, 2);
             mask = flip(mask, 2);
         end
-        if rand < 0.8
-            img = uint16( ((single(img)/500).^(randn(1)*0.05+1))*500);
+        if state(2) < 0.8
+            img = uint16( ((single(img)/500).^(state(3)*0.1+1))*500);
         end
     end
     
     function [imgs, masks] = readSlices(imgds, masksds, inputSize, bathSize)
-        imgs = zeros([inputSize(1:2),1,bathSize]);
+        imgs = zeros([inputSize(1:3),bathSize]);
         masks = zeros([inputSize(1:2),1,bathSize]);
         k = 1;
         for i = 1:length(imgds)
             medVolData = medicalVolume([imgds(i).folder filesep imgds(i).name]);
             medVolMask = medicalVolume([masksds(i).folder filesep masksds(i).name]);
             num_slices = bathSize/length(imgds);
-            idx = randi([1,medVolData.NumTransverseSlices],num_slices,1);
+            idx = randi([3,medVolData.NumTransverseSlices-2],num_slices,1);
             for sl = 1 : num_slices
-                slice = idx(sl);
-                img = extractSlice(medVolData,slice,"transverse");
-                img = rot90(img,1);
-                p = single(prctile(img(img>0),95,"all"));
-                img = uint16((double(img)/p)*500);
-                mask = extractSlice(medVolMask,slice,"transverse");
-                mask = rot90(mask,1);
-                [img, mask] = utils_net_train.augment_transf(img, mask);
-                rect = utils_net_train.genRect(size(img),inputSize);
-                imgs(:,:,1,k) = imcrop(img,rect);
-                masks(:,:,1,k) = imcrop(mask,rect);
+                transl = [-2,0,2];
+                rect = utils_net_train.genRect(medVolData.VolumeGeometry.VolumeSize([1,2]),inputSize);
+                state = [rand(1,2),randn(1)];
+                for ii = 1:3
+                    slice = idx(sl) + transl(ii);
+                    img = extractSlice(medVolData,slice,"transverse");
+                    img = rot90(img,1);
+                    p = single(prctile(img(img>0),95,"all"));
+                    img = uint16((double(img)/p)*500);
+                    mask = extractSlice(medVolMask,slice,"transverse");
+                    mask = rot90(mask,1);
+                    [img, mask] = utils_net_train.augment_transf(img, mask, state);
+                    imgs(:,:,ii,k) = imcrop(img,rect);
+                    if ii==2
+                        masks(:,:,1,k) = imcrop(mask,rect);
+                    end
+                end
+
                 k = k+1;
             end
             % delete medVolData
@@ -88,24 +100,27 @@ classdef utils_net_train
         medVoldata = medicalVolume([imgds(1).folder filesep imgds(1).name]);
         medVolMask = medicalVolume([maskds(1).folder filesep maskds(1).name]);
 
-        idx = randi([1,medVoldata.NumTransverseSlices],bathSize,1);
+        idx = randi([3,medVoldata.NumTransverseSlices-2],bathSize,1);
 
-        imgs = zeros([inputSize(1:2),1,bathSize]);
+        imgs = zeros([inputSize(1:3),bathSize]);
         masks = zeros([inputSize(1:2),1,bathSize]);
-        rect = utils_net_train.genRect(medVoldata.VolumeGeometry.VolumeSize,inputSize);
+        rect = utils_net_train.genRect(medVoldata.VolumeGeometry.VolumeSize([1,2]),inputSize);
 
-        for i = 1:size(idx,1)
-            slice = idx(i);
-            img = extractSlice(medVoldata,slice,"transverse");
-            img = rot90(img,1);
-            p = single(prctile(img(img>0),95,"all"));
-            img = uint16((double(img)/p)*500);
-
-            mask = extractSlice(medVolMask,slice,"transverse");
-            mask = rot90(mask,1);
-
-            imgs(:,:,1,i) = imcrop(img,rect);
-            masks(:,:,1,i) = imcrop(mask,rect);
+        for sl = 1:size(idx,1)
+            transl = [-2,0,2];
+            for ii = 1:3
+                slice = idx(sl) + transl(ii);
+                img = extractSlice(medVolData,slice,"transverse");
+                img = rot90(img,1);
+                p = single(prctile(img(img>0),95,"all"));
+                img = uint16((double(img)/p)*500);
+                mask = extractSlice(medVolMask,slice,"transverse");
+                mask = rot90(mask,1);
+                imgs(:,:,ii,k) = imcrop(img,rect);
+                if ii==2
+                    masks(:,:,1,k) = imcrop(mask,rect);
+                end
+            end
         end
         % delete medVolData
         % delete medVolMask

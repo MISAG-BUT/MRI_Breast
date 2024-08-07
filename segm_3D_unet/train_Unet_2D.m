@@ -23,7 +23,6 @@ maskdsVal = maskds(splitnum:end);
 imgds = imgds(1:splitnum-1);
 maskds = maskds(1:splitnum-1);
 
-inputSize = [256, 256, 1];
 
 %% training 
 
@@ -32,21 +31,22 @@ inputSize = [256, 256, 1];
 
 % plot(net)
 
-% net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=8);
-net = load('trainedUNet_3_0.mat','net').net;
+inputSize = [256, 256, 3];
 
-%% Train the U-Net network
+net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=16);
+% net = load('trainedUNet_3_0.mat','net').net;
 
-SlicesBatchSize = 8;
+%% Traininig parameters
+
+SlicesBatchSize = 16;
 PatBatchSize = 2;
 
 miniBatchSize = PatBatchSize * SlicesBatchSize;
-numEpochs = 200;
-numSlicesVal = 16;
+numEpochs = 300;
+numSlicesVal = 32;
 
-initialLearnRate = 0.001;
-decayLearnRate = 0.0005;
-
+initialLearnRate = 0.01;
+decayLearnRate = 0.003;
 
 numObservations = numel(imgds);
 numIterationsPerEpoch = floor(numObservations./PatBatchSize);
@@ -57,8 +57,9 @@ numIterations = numEpochs * numIterationsPerEpoch;
 figure
 plot(initialLearnRate./(1 + decayLearnRate * [1:numIterations]))
 
-Val_iter = round(numIterationsPerEpoch * (1));
+Val_iter = round(numIterationsPerEpoch * (2));
 
+%% Train the U-Net network
 
 monitor = trainingProgressMonitor(XLabel="Iteration");
 monitor.Info = ["LearningRate","Epoch","Iteration"];
@@ -146,6 +147,6 @@ while epoch < numEpochs && ~monitor.Stop
     end
 end
 
-description = ['from 3_0, loss generalizedDice 2D, pomalejsi pokles LR, Unet na sagitalni rezy, slices v minbatchi z mnoha (2) pacientu'];
+description = ['stejne jako v3 ale se 3 kanalama tri rezu'];
 % Save the trained network
-save('segm_3D_unet\trainedUNet_3_2.mat', 'net','netBest','monitor', 'description');
+save('segm_3D_unet\trainedUNet_4_0.mat', 'net','netBest','monitor', 'description');

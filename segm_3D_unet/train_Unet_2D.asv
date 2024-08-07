@@ -23,7 +23,6 @@ maskdsVal = maskds(splitnum:end);
 imgds = imgds(1:splitnum-1);
 maskds = maskds(1:splitnum-1);
 
-inputSize = [256, 256, 1];
 
 %% training 
 
@@ -32,8 +31,10 @@ inputSize = [256, 256, 1];
 
 % plot(net)
 
-% net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=8);
-net = load('trainedUNet_3_0.mat','net').net;
+inputSize = [256, 256, 3];
+
+net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=8);
+% net = load('trainedUNet_3_0.mat','net').net;
 
 %% Train the U-Net network
 
@@ -41,11 +42,11 @@ SlicesBatchSize = 8;
 PatBatchSize = 4;
 
 miniBatchSize = PatBatchSize * SlicesBatchSize;
-numEpochs = 100;
-numSlicesVal = 16;
+numEpochs = 300;
+numSlicesVal = 32;
 
-initialLearnRate = 0.0001;
-decayLearnRate = 0.05;
+initialLearnRate = 0.01;
+decayLearnRate = 0.005;
 
 
 numObservations = numel(imgds);
@@ -57,7 +58,7 @@ numIterations = numEpochs * numIterationsPerEpoch;
 figure
 plot(initialLearnRate./(1 + decayLearnRate * [1:numIterations]))
 
-Val_iter = round(numIterationsPerEpoch * (1));
+Val_iter = round(numIterationsPerEpoch * (2));
 
 
 monitor = trainingProgressMonitor(XLabel="Iteration");
@@ -120,13 +121,13 @@ while epoch < numEpochs && ~monitor.Stop
                 if canUseGPU
                     XVal = gpuArray(XVal);
                 end
-                [vloss,~,GDice] = dlfeval(@utils_net_train.modelLoss,net,XVal,TVal);
-                valDice = valDice + (GDice) /numel(imgdsVal);
+                [vloss,~,vGDice] = dlfeval(@utils_net_train.modelLoss,net,XVal,TVal);
+                valDice = valDice + (vGDice) /numel(imgdsVal);
                 valLoss = valLoss + (vloss) /numel(imgdsVal);
             end
             recordMetrics(monitor,iteration, ...
                 TrainingLoss = loss, ...
-                TrainingDice = 1-loss, ...
+                TrainingDice = GDice, ...
                 ValidationLoss = valLoss, ...
                 ValidationDice = valDice)
             if valDice>ValBest
@@ -137,7 +138,7 @@ while epoch < numEpochs && ~monitor.Stop
             % Update the training progress monitor.
             recordMetrics(monitor,iteration, ...
                 TrainingLoss = loss, ...
-                TrainingDice = 1-loss);
+                TrainingDice = GDice);
         end
 
         updateInfo(monitor,Epoch = epoch + " of " + numEpochs);
@@ -146,6 +147,6 @@ while epoch < numEpochs && ~monitor.Stop
     end
 end
 
-description = 'from 3_0, nyni spravny Dice 2D, unet na sagitalni rezy, slices v minbatchi z mnoha (4) pacientu';
+description = ['stejne jako v3 ale se 3 kanalama tri rezu'];
 % Save the trained network
-save('trainedUNet_3_1.mat', 'net','netBest','monitor', 'description');
+save('segm_3D_unet\trainedUNet_4_0.mat', 'net','netBest','monitor', 'description');
