@@ -24,6 +24,7 @@ classdef utils_net_train
         Y(isnan(Y)) = 0;
         targets(:,:,2,:) = 1-targets(:,:,1,:);
         GD = generalizedDice(targets, Y);
+        % GD = dice(targets, Y);
         loss = 1 - GD.mean('all');
     end
     
@@ -34,7 +35,7 @@ classdef utils_net_train
         % loss = utils_net_train.DiceLoss(Y,T);
         % Acc = 1 - utils_net_train.generalizedDiceLoss(Y,T);
         loss = utils_net_train.generalizedDiceLoss(Y,T);
-        Acc = 1 - utils_net_train.DiceLoss(Y,T);
+        Acc = 1 - utils_net_train.DiceLoss(Y>0.5,T);
         % % Calculate gradients of loss with respect to learnable parameters.
         gradients = dlgradient(loss,net.Learnables);
     end
@@ -56,7 +57,8 @@ classdef utils_net_train
             mask = flip(mask, 2);
         end
         if state(2) < 0.8
-            img = uint16( ((single(img)/500).^(state(3)*0.1+1))*500);
+            % img = uint16( ((single(img)/500).^(state(3)*0.1+1))*500);
+            img = uint16( ((single(img)/500).^(state(3)*0.5+1))*500);
         end
     end
     
@@ -127,24 +129,29 @@ classdef utils_net_train
         % delete medVolMask
     end
     
-    function [masks] = seg_image(imgds, inputSize)
-        img = imread([imgds(1).folder filesep imgds(1).name]);
-        [rects] = split_image(img, inputSize, 0.75);
-        masks = zeros([size(img,1),size(img,2)]);
-        imgs = zeros(inputSize([2,1],7,1));
-        for i = 1:size(rects,1)
-            rect = rects(i,:);
-            imgs(:,:,1:3,1) = imcrop(img,rect);
-            imgs(:,:,4:6,1) = imresize(img, inputSize([1,2]));
+    function [mask] = seg_image(data, inputSize)
+        mask = zeros(size(data));
+        for slice = 1:size(data,3)
+            img = data(:,:,slice);    
+            [rects] = utils_net_train.split_image(img, inputSize, 0.85);    
+            mask_pred = zeros([size(img,1),size(img,2)]);
             rect_mask = zeros(size(img,1),size(img,2));
-            rect_mask(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = 1;
-            imgs(:,:,7,1) = imresize(rect_mask, inputSize(1:2));
-            imgs = dlarray(single(imgs),"SSCB");
-            if canUseGPU
-                imgs = gpuArray(imgs);
+            for i = 1:size(rects,1)
+                rect = rects(i,:);
+                X = zeros([inputSize([1,2]),1,1]);
+                X(:,:,1,1) = imcrop(img,rect);
+                p = single(prctile(X(X>0),95,"all"));
+                X = uint16((double(X)/p)*500);
+                X = dlarray(single(X),"SSCB");
+                if canUseGPU
+                    X = gpuArray(X);
+                end
+                [pred] = predict(net,X);
+                pred = extractdata(pred);
+                mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) + pred(:,:,1,1);
+                rect_mask(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = rect_mask(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) + 1;
             end
-            [pred] = predict(net,XVal);
-            masks(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = pred(:,:,1,1);
+            mask(:,:,slice) = mask_pred ./ rect_mask;
         end
     end
     

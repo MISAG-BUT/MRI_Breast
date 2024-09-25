@@ -4,6 +4,7 @@ close all
 clc
 reset(gpuDevice)
 
+%% datat public
 % Set paths to the image and mask folders
 imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_3';
 % maskFolder = 'data\forTraining\training\binary_images';
@@ -17,11 +18,60 @@ idx = randperm(numel(imgds) );
 imgds = imgds(idx);
 maskds = maskds(idx);
 
-splitnum = round(numel(imgds)*0.85);
+% imgds = imgds(1:20);
+% maskds = maskds(1:20);
+
+splitnum = round(numel(imgds)*0.88);
 imgdsVal = imgds(splitnum:end);
 maskdsVal = maskds(splitnum:end);
 imgds = imgds(1:splitnum-1);
 maskds = maskds(1:splitnum-1);
+
+%% datat FNUSA I
+% Set paths to the image and mask folders
+imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_4';
+% maskFolder = 'data\forTraining\training\binary_images';
+
+imgds2 = dir([imageFolder filesep '*orig.nii.gz']);
+maskds2 = dir([imageFolder filesep '*labels.nii.gz']);
+
+% rng(10)
+% idx = randperm(numel(imgds2) );
+% imgds2 = imgds2(idx);
+% maskds2 = maskds2(idx);
+
+%% datat FNUSA II
+% Set paths to the image and mask folders
+imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_5';
+% maskFolder = 'data\forTraining\training\binary_images';
+
+imgds3 = dir([imageFolder filesep '*orig.nii.gz']);
+maskds3 = dir([imageFolder filesep '*labels.nii.gz']);
+
+% imgds3 = imgds3([1:11,13,14,15]);
+
+% join FNUSA i a FNUSA II
+imgds2 = [imgds2; imgds3];
+maskds2 = [maskds2; maskds3];
+
+
+%% shufle
+rng(777)
+idx = randperm(numel(imgds2) );
+imgds2 = imgds2(idx);
+maskds2 = maskds2(idx);
+
+%%
+splitnum = round(numel(imgds2)*0.88);
+
+imgdsVal = [imgdsVal; imgds2(splitnum:end)];
+maskdsVal = [maskdsVal; maskds2(splitnum:end)];
+
+% imgds = [imgds; imgds2(1:splitnum-1)];
+% maskds = [maskds; maskds2(1:splitnum-1)];
+
+imgds = [imgds; imgds2];
+maskds = [maskds; maskds2];
 
 
 %% training 
@@ -33,8 +83,8 @@ maskds = maskds(1:splitnum-1);
 
 inputSize = [256, 256, 3];
 
-net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=16);
-% net = load('trainedUNet_3_0.mat','net').net;
+% net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=16);
+net = load('trainedUNet_4_7.mat','net').net;
 
 %% Traininig parameters
 
@@ -45,8 +95,12 @@ miniBatchSize = PatBatchSize * SlicesBatchSize;
 numEpochs = 300;
 numSlicesVal = 32;
 
-initialLearnRate = 0.01;
-decayLearnRate = 0.003;
+initialLearnRate = 0.005;
+num_cyclic = 5;
+
+% decayLearnRate = 0.0005;
+% num_step = 5 ;
+% decreasingLR = 100;
 
 numObservations = numel(imgds);
 numIterationsPerEpoch = floor(numObservations./PatBatchSize);
@@ -54,8 +108,15 @@ averageGrad = [];
 averageSqGrad = [];
 numIterations = numEpochs * numIterationsPerEpoch;
 
+learnRates = (linspace(1, 0.05 , numIterations));
+C = (cos(2*pi*num_cyclic*linspace(0,1,numIterations)) +1.5 )/2.5;
+
+learnRates = initialLearnRate .* C .* learnRates;
 figure
-plot(initialLearnRate./(1 + decayLearnRate * [1:numIterations]))
+plot(learnRates)
+
+% figure
+% plot(initialLearnRate./(1 + decayLearnRate * [1:numIterations]))
 
 Val_iter = round(numIterationsPerEpoch * (2));
 
@@ -86,10 +147,10 @@ while epoch < numEpochs && ~monitor.Stop
         iteration = iteration + 1;
 
         % Determine learning rate for time-based decay learning rate schedule.
-        learnRate = initialLearnRate/(1 + decayLearnRate * iteration);
+        % learnRate = initialLearnRate/(1 + decayLearnRate * iteration);
+        learnRate = learnRates(iteration);
 
-        % Read mini-batch of data and convert the labels to dummy
-        % variables.
+        % Read mini-batch of data 
         idx = (i-1)*PatBatchSize+1:i*PatBatchSize;
         
         [X, T] = utils_net_train.readSlices(imgds(idx), maskds(idx), inputSize, miniBatchSize);
@@ -142,11 +203,12 @@ while epoch < numEpochs && ~monitor.Stop
         end
 
         updateInfo(monitor,Epoch = epoch + " of " + numEpochs);
-        updateInfo(monitor,LearningRate = learnRate, Iteration=iteration + " ( " + numIterationsPerEpoch + " ) ");
+        updateInfo(monitor,LearningRate = learnRate, Iteration=iteration + " ( " + numIterationsPerEpoch + " ) / " + numIterations);
         monitor.Progress = 100 * iteration/numIterations;
     end
 end
 
-description = ['stejne jako v3 ale se 3 kanalama tri rezu'];
+description = ['velka kontrastni augmentace, from 4.7, All fold - FNUSA II a II datech spolu s public daty (cele), VETSI krok LR=0.005, Cyclic LRschedule, novi pacienti S482XX'];
+% description = ['douceni na FNUSA datech spolu se vsemi public daty, vetsi krok'];
 % Save the trained network
-save('segm_3D_unet\trainedUNet_4_0.mat', 'net','netBest','monitor', 'description');
+save('segm_3D_unet\trainedUNet_4_8.mat', 'net','netBest','monitor', 'description','imgdsVal', 'imgds');

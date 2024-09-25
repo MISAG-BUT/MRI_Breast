@@ -23,11 +23,13 @@ maskdsVal = maskds(splitnum:end);
 imgds = imgds(1:splitnum-1);
 maskds = maskds(1:splitnum-1);
 
-inputSize = [256, 256, 1];
+inputSize = [256, 256, 3];
 
 %%
 % net = load('trainedUNet_3_2.mat','netBest').netBest;
-net = load('trainedUNet_3_2.mat','net').net;
+% net = load('trainedUNet_3_2.mat','net').net;
+net = load('trainedUNet_4_0.mat','net').net;
+% net = load('trainedUNet_4_0.mat','netBest').netBest;
 
 
 %%
@@ -40,17 +42,22 @@ ds = imgdsVal;
 dsm = maskdsVal;
 
 data = niftiread([ds(numImg).folder filesep ds(numImg).name]);
+
 mask = zeros(size(data));
-for slice = 1:size(data,3)
+for slice = 1+2:size(data,3)-2
     img = data(:,:,slice);    
+    img1 = data(:,:,slice-2);    
+    img3 = data(:,:,slice+2);    
     [rects] = utils_net_train.split_image(img, inputSize, 0.85);    
     mask_pred = zeros([size(img,1),size(img,2)]);
     rect_mask = zeros(size(img,1),size(img,2));
 
     for i = 1:size(rects,1)
         rect = rects(i,:);
-        X = zeros([inputSize([1,2]),1,1]);
-        X(:,:,1,1) = imcrop(img,rect);
+        X = zeros([inputSize,1]);
+        X(:,:,1,1) = imcrop(img1,rect);
+        X(:,:,2,1) = imcrop(img,rect);
+        X(:,:,3,1) = imcrop(img3,rect);
         p = single(prctile(X(X>0),95,"all"));
         X = uint16((double(X)/p)*500);
         X = dlarray(single(X),"SSCB");

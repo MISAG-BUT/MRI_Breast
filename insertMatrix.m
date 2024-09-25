@@ -64,7 +64,10 @@ switch mode
 
     case 'add'
         R(pb(1):pb(1)+v(1)-1,pb(2):pb(2)+v(2)-1,pb(3):pb(3)+v(3)-1) = R(pb(1):pb(1)+v(1)-1,pb(2):pb(2)+v(2)-1,pb(3):pb(3)+v(3)-1) + b;
-      
+    
+    case 'max'
+        R(pb(1):pb(1)+v(1)-1,pb(2):pb(2)+v(2)-1,pb(3):pb(3)+v(3)-1) = max( R(pb(1):pb(1)+v(1)-1,pb(2):pb(2)+v(2)-1,pb(3):pb(3)+v(3)-1), b);
+
     case 'and'
         R(pb(1):pb(1)+v(1)-1,pb(2):pb(2)+v(2)-1,pb(3):pb(3)+v(3)-1) = R(pb(1):pb(1)+v(1)-1,pb(2):pb(2)+v(2)-1,pb(3):pb(3)+v(3)-1) .* b;
         
