@@ -151,11 +151,8 @@ for pat = 1:length(pat_dir)
         % imfuse5(data, maskFinal)
         % imshow5(lbl)
 
-            if d==1
-                path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_I\predicted_4_' num2str(verse) filesep ];
-            elseif d==2
-                path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_II\predicted_4_' num2str(verse) filesep ];
-            end
+        % path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_I\predicted_4_' num2str(verse) filesep ];
+        path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_II\predicted_4_' num2str(verse) filesep ];
         
         file_save = [pat_dir(pat).name];
         mkdir(path_save)
@@ -172,11 +169,10 @@ for pat = 1:length(pat_dir)
         if verse==0
             niftiwrite(int16(data),[path_save file_save '_orig'],nii_info,"Compressed",true)
         end
-
         niftiwrite(int16(maskFinal),[path_save file_save '_mask_pp'],nii_info,"Compressed",true)
         niftiwrite(int16(maskThr),[path_save file_save '_mask'],nii_info,"Compressed",true)
     
     end
-    end
+    % end
 
 end

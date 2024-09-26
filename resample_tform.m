@@ -12,6 +12,7 @@ ratios = targetVoxelSize ./ medVol.VoxelSpacing;
 origRef = medVol.VolumeGeometry;
 origMapping = intrinsicToWorldMapping(origRef);
 tform = origMapping.A([2,1,3,4],[1,2,3,4]);
+% tform = origMapping.A;
 
 newMapping4by4 = tform * diag([1./medVol.VoxelSpacing 1]);
 newMapping4by4 = newMapping4by4 * diag([ratios 1]);

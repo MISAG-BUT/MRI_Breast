@@ -1,4 +1,4 @@
-function [collection] = dicoms_info(path,name_find)
+function [collection] = dicoms_info(path, name_find)
 
 D = dir([path '\' name_find ]);
 k=1;
@@ -40,6 +40,7 @@ collection = sortrows(collection,{'AcquisitionTime','SliceLocation'});
 
 for d = 1:TotalDyn
     NumSlices = StatDyn.Count(d);
+
     IDSlices = [IDSlices, 1:NumSlices];
     % collection = sortrows(collection,{'AcquisitionTime','SliceLocation'});
     % collection{1:NumSlices,'Slice'} = [1:NumSlices]';

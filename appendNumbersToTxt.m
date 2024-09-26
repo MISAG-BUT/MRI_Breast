@@ -12,8 +12,9 @@ function appendNumbersToTxt(num1, num2, filename, txt)
     % Load existing JSON data
     fid = fopen(filename, 'a');
 %     jsonStr = fread(fid, '*char').';
-    fprintf(fid, '%s %d %d\n',txt, num1, num2 );
+    fprintf(fid, '%s Right = %4.0f ml ; Left = %4.0f ml \n', txt, num1, num2 );
     fclose(fid);
+
 %     data = jsondecode(jsonStr);
     
     % Append new numbers

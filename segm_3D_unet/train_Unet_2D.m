@@ -29,8 +29,8 @@ maskds = maskds(1:splitnum-1);
 
 %% datat FNUSA I
 % Set paths to the image and mask folders
-imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_4';
-% maskFolder = 'data\forTraining\training\binary_images';
+% imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_4';
+imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_6';  % instance segmentation
 
 imgds2 = dir([imageFolder filesep '*orig.nii.gz']);
 maskds2 = dir([imageFolder filesep '*labels.nii.gz']);
@@ -42,8 +42,8 @@ maskds2 = dir([imageFolder filesep '*labels.nii.gz']);
 
 %% datat FNUSA II
 % Set paths to the image and mask folders
-imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_5';
-% maskFolder = 'data\forTraining\training\binary_images';
+% imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_5';
+imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_7';     % instance segmentation
 
 imgds3 = dir([imageFolder filesep '*orig.nii.gz']);
 maskds3 = dir([imageFolder filesep '*labels.nii.gz']);

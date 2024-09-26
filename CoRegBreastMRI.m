@@ -3,8 +3,13 @@ clear all
 close all
 clc
 
-path_data = 'S:\MRI_Breast\Data\Export';
+% path_data = 'D:\Breast_MR_I\Export';
+path_data = 'D:\Breast_MR_II\Export';
+
+% path_data = 'D:\Breast_VFN_25092024\Export';
+
 D = dir([path_data '*\**\S*']);
+% D = dir([path_data '\S*']);
 
 % [path_data] = uigetdir(['S:\registrace_MRI_prs\Data']);
 % [path_data] = uigetdir();
@@ -60,7 +65,7 @@ else
 end
 
 multiWaitbar('Segmentation model loading...', 'Value', 0.3);
-load('model_2.mat','net')
+net = load('trainedUNet_4_8.mat','netBest').netBest;
 multiWaitbar( 'CloseAll' );
 
 % h = waitbar(0,['Patient 1 from ' num2str(length(D))]);
@@ -69,7 +74,7 @@ multiWaitbar(['Patient: 0 from ' num2str(length(D))], 'Increment', 1/length(D));
 
 %%
 
-for pat = 1:length(D)
+for pat = 1 %:length(D)
 
     multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
     multiWaitbar(['Patient: ' num2str(pat) ' from ' num2str(length(D))], 'Value', (pat-1)/length(D));
@@ -80,19 +85,39 @@ for pat = 1:length(D)
     path_save = fullfile( D(pat).folder, D(pat).name,  'Results');
     mkdir(path_save)
     
-    lenDD=[];
+    lenDD=[]; descriptions={};
     for ii = 1:length(DD)
         path_2 = fullfile(DD(ii).folder, DD(ii).name);
-        lenDD(ii) = length(dir([path_2 '\I*']));
+        dcmDD = dir([path_2 '\I*']);
+        lenDD(ii) = length(dcmDD);
+        descriptions{ii} = dicominfo(fullfile(dcmDD(1).folder, dcmDD(1).name)).SeriesDescription;
     end
     
     [~,m] = max(lenDD);
     path_3 = fullfile(DD(m).folder, DD(m).name);
+    descriptions{m}
 
+    % podminky pro nalezeni spravne dynamiky
+    % napr. hledani textu "dyn", pak najit druhy nejosahlejsi slozku a
+    % hledat slovo dyn
+
+
+    % answ = questdlg(['There was found ' descriptions{m} ' series. Would you like to run the program?'],"Selected series",'Yes','Cancel','Yes');
+    % if isempty(answ)
+    %     return
+    % else
+    %     switch answ
+    %         case 'Cancel'
+    %             return
+    %     end
+    % end
 
 %%
     
-    [collection,vel] = dicoms_info(path_3, 'I*');
+    [collection] = dicoms_info(path_3, ['I*']);
+
+    num_dyn = max(collection{:,'Dyn'});
+
     % save('collection.mat','collection','vel')
     % load('collection.mat')
 
@@ -102,11 +127,17 @@ for pat = 1:length(D)
 %     multiWaitbar('Task: Resave dynamic data', 'Value', 0.1);
     multiWaitbar('Resaving dynamic data', 'Value', 0);
 
-    col = collection(collection.Dyn==1,:);    
-    [dataR,InfoR]=dicomreadVolume(col.FileName);
+    col = collection(collection.Dyn==1,:); 
+
+    [dataR,InfoR]=dicomreadVolume(col.Filenames);
     dataR = squeeze(dataR);
 
-    maskA =  uint8(dataR>10);
+    % medVol = medicalVolume(col.Filenames);
+    % dataR = medVol.Voxels;
+
+    T = multithresh( single(dataR(dataR>0)) ./ single(max(dataR(:))) , 3) .* single(max(dataR(:)));
+    T = T-10; T(T<0)=0;
+    maskA =  uint8( dataR>T(1) );
 
 %     path_save_1 = [path_save filesep 'orig_dyn_'  num2str(1)];
     path_save_1 = [path_save filesep 'orig_dyn'];
@@ -121,7 +152,7 @@ for pat = 1:length(D)
     UID_sub_orig = dicomuid;
 
     for i = 1:size(dataR,3)
-        [~,name] = fileparts(col.FileName(i));
+        [~,name] = fileparts(col.Filenames(i));
         metadata = col.Info{i};
         metadata.SeriesDescription = [ 'NOT DIAG - ' 'Orig ' metadata.SeriesDescription ];
         metadata.SeriesInstanceUID =  UID_orig;
@@ -129,7 +160,7 @@ for pat = 1:length(D)
         metadata.WindowCenter = 300;
         dicomwrite( dataR(:,:,i), [path_save_1 filesep char(name)] , metadata);
 
-        [~,name] = fileparts(col.FileName(i));
+        [~,name] = fileparts(col.Filenames(i));
         metadata = col.Info{i};
         metadata.SeriesDescription = [ 'NOT DIAG - ' 'Reg ' metadata.SeriesDescription ];
         metadata.SeriesInstanceUID =  UID_reg;
@@ -146,28 +177,27 @@ for pat = 1:length(D)
 % multiWaitbar('Breast segmentation','Value',0.0);
 multiWaitbar('Breast segmentation','Value',0.3);
 
-[s] = segmentation_breast_2(dataR,col.Info{1,1}, net);
+[mask, volumes, hFig] = segmentation_breast_2(dataR, col.Info{1,1}, net);
 
-[s, mask1,maskA] = segmentation_breast(single(dataR),[col.Info{1,1}.PixelSpacing;1]');
-
-multiWaitbar('Breast segmentation ...','Value', 0.9);
-pasuse(0.5)
+multiWaitbar('Breast segmentation','Value', 0.9);
+pause(0.5)
 
 filenameTxt = [ path_save filesep 'Breast_sizes.txt'];
-
-% appendNumbersToTxt(s(1), s(2), filenameTxt, 'Dyn_0 - ')
+appendNumbersToTxt(volumes(1), volumes(2), filenameTxt, 'Dyn_0 -')
+saveas(hFig,replace(filenameTxt,'Breast_sizes.txt', 'Breast_segmentation.png'))
+close(hFig)
 
 multiWaitbar('Breast segmentation','Close');
 
 %% registrace dynamik
 %     multiWaitbar('Resaving dynamic data', 'Relabel', ['Registration of 1 dynamics']);
-    multiWaitbar('Registration of 1 dynamics','Increment',1/(vel(2)-1) );
+    multiWaitbar('Registration of 1 dynamics','Increment',1/(num_dyn-1) );
 
-for dyn = 2:vel(2)
+for dyn = 2:num_dyn
     
     multiWaitbar(['Registration of ' num2str(dyn-1) ' dynamics'], 'Relabel', ['Registration of ' num2str(dyn) ' dynamics']);
 %     multiWaitbar('Task: Resave dynamic data', 'Value', 0.1);
-    multiWaitbar(['Registration of ' num2str(dyn) ' dynamics'], 'Value', (dyn-2)/(vel(2)-1) );
+    multiWaitbar(['Registration of ' num2str(dyn) ' dynamics'], 'Value', (dyn-2)/(num_dyn-1) );
 
     try
         rmdir([path_save filesep '\TempFile\'],'s');
@@ -177,26 +207,27 @@ for dyn = 2:vel(2)
     mkdir(tempFile);
 
 %     col = collection(collection.Dyn==1,:);    
-%     [dataR,InfoR]=dicomreadVolume(col.FileName);
+%     [dataR,InfoR]=dicomreadVolume(col.Filenames);
 
     multiWaitbar('Read data','Increment',1/5);
     multiWaitbar('Read data','Value',1/5);
 
     col = collection(collection.Dyn==dyn,:);
-    [dataM,InfoM]=dicomreadVolume(col.FileName);
+    [dataM,InfoM]=dicomreadVolume(col.Filenames);
     
 %     dataR = squeeze(dataR);
     dataM = squeeze(dataM);
 
-    maskB = uint8(dataM>10);
-    
+    T = multithresh( single(dataR(dataR>0)) ./ single(max(dataR(:))) , 3) .* single(max(dataR(:)));
+    T = T-10; T(T<0)=0;
+    maskB = uint8( dataM > T(1) );
     
     %%
     multiWaitbar('Read data','Relabel','Registration');
     multiWaitbar('Registration','Value',2/5);
 
-    PF_name = [ctfroot '\CoRegBreastM' '\parametric_file\BSpline_custom.txt' ];
-    % PF_name = ['parametric_file\BSpline_custom.txt' ];
+    % PF_name = [ctfroot '\CoRegBreastM' '\parametric_file\BSpline_custom.txt' ];
+    PF_name = ['parametric_file\BSpline_custom.txt' ];
 
 %     disp(ctfroot)
 %     disp(matlabroot)
@@ -209,8 +240,8 @@ for dyn = 2:vel(2)
     mat2raw_3D(maskB,tempFile,'maskB',[InfoM.PixelSpacings(1,:), InfoM.PatientPositions(2,3)-InfoM.PatientPositions(1,3)] )
     
     
-    CMD = [ ctfroot '\CoRegBreastM' '\elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
-    % CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
+    % CMD = [ ctfroot '\CoRegBreastM' '\elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
+    CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
 
     %     CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ];
     system(CMD)
@@ -268,7 +299,7 @@ for dyn = 2:vel(2)
 
 %     UID_reg = dicomuid;
     for i = 1:size(registered,3)
-        [~,name] = fileparts(col.FileName(i));
+        [~,name] = fileparts(col.Filenames(i));
         metadata = col.Info{i};
         metadata.SeriesDescription = [ 'NOT DIAG - ' 'Reg ' metadata.SeriesDescription ];
         metadata.SeriesInstanceUID =  UID_reg;
@@ -294,7 +325,7 @@ for dyn = 2:vel(2)
 
 %     UID_sub_reg = dicomuid;
     for i = 1:size(registered,3)
-        [~,name] = fileparts(col.FileName(i));
+        [~,name] = fileparts(col.Filenames(i));
         metadata = col.Info{i};
         metadata.SeriesDescription = ['NOT DIAG - ' 'Sub Reg ' metadata.SeriesDescription ];
         metadata.SeriesInstanceUID =  UID_sub_reg;
@@ -315,7 +346,7 @@ for dyn = 2:vel(2)
 
 %     UID_sub_orig = dicomuid;
     for i = 1:size(dataM,3)
-        [~,name] = fileparts(col.FileName(i));
+        [~,name] = fileparts(col.Filenames(i));
         metadata = col.Info{i};
         metadata.SeriesDescription = ['NOT DIAG - ' 'Sub Orig ' metadata.SeriesDescription ];
         metadata.SeriesInstanceUID =  UID_sub_orig;
@@ -337,7 +368,7 @@ for dyn = 2:vel(2)
 
 %     UID = dicomuid;
     for i = 1:size(dataM,3)
-        [~,name] = fileparts(col.FileName(i));
+        [~,name] = fileparts(col.Filenames(i));
         metadata = col.Info{i};
         metadata.SeriesDescription = [ 'NOT DIAG - ' 'Orig ' metadata.SeriesDescription ];
         metadata.SeriesInstanceUID =  UID_orig;

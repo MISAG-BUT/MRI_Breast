@@ -1,44 +1,92 @@
 %% breasst segmentation
 
-function [s] = segmentation_breast_2(dataR,info, net)
+function [maskFinal, volumes, h] = segmentation_breast_2(dataR,info, net)
 
 
-input_size = [128,128,64];
-desired_voxel_size = [2,2,2];
+[T,R,S] = getTransMatrix(info);
 
-[T,R,S] = getTransMatrix(info)
+% T = T';
+% T(:,[1,2]) = T(:,[2,1]);
 
-current_voxel_size = diag( S(1:3,1:3) )';
+Mapping = affinetform3d(T);
 
-T = T';
-T(:,[1,2]) = T(:,[2,1]);
+data = imwarp(dataR,(Mapping));
+invMapping = invert(Mapping);
 
-[dataR2, T_new] = transfToUnit(dataR, T, current_voxel_size, desired_voxel_size);
+vel = size(dataR);
 
-vel = size(dataR2);
+p = single(prctile(data(data>0),95,"all"));
+data = uint16((double(data)/p)*500);
 
-dataR2 = single( imresize3(dataR2, input_size,"nearest"));
-dataR2 = ( rescale(dataR2,"InputMin",0,"InputMax",quantile(dataR(:),0.98)) *2500);
+inputSize = [256, 256, 3];
+mask = zeros(size(data));
 
-% Perform prediction
-pred = predict(net, dataR2);
+for slice = 1+2:size(data,3)-2
+    img = data(:,:,slice);
+    img1 = data(:,:,slice-2);
+    img3 = data(:,:,slice+2);
+    [rects] = utils_net_train.split_image(img, inputSize, 0.85);
+    mask_pred = zeros([size(img,1),size(img,2)]);
+    rect_mask = zeros(size(img,1),size(img,2));
+    
+    C = centerCropWindow2d(size(img3,[1,2]),inputSize(1:2));
+    rects(end+1,:) = [C.XLimits(1), C.YLimits(1), inputSize(1:2)-1];
 
-% mask = imresize3(pred(:,:,:,2)>0.5, vel,"nearest");
+    for i = 1:size(rects,1)
+        rect = rects(i,:);
+        X = zeros([inputSize,1]);
+        X(:,:,1,1) = imcrop(img1,rect);
+        X(:,:,2,1) = imcrop(img,rect);
+        X(:,:,3,1) = imcrop(img3,rect);
+        % p = single(prctile(X(X>0),95,"all"));
+        % X = uint16((double(X)/p)*500);
+        X = dlarray(single(X),"SSCB");
+        if canUseGPU
+            X = gpuArray(X);
+        end
+        [pred] = predict(net,X);
+        pred = extractdata(pred);
+        % mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) + pred(:,:,1,1);
+        % rect_mask(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = rect_mask(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) + 1;
+        mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = max( mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) , pred(:,:,1,1) );
+    end
+    % mask(:,:,slice) = mask_pred ./ rect_mask;
+    mask(:,:,slice) = mask_pred;
+end
 
-mask = pred(:,:,:,2)>0.5;
-% mask = imopen(mask,create_sphere(1));
-% mask = imopen(mask,create_sphere(2));
-mask = imclose(mask,create_sphere(1));
-% mask = imclose(mask,create_sphere(2));
-mask = imopen(mask,create_sphere(1));
+maskThr = mask>0.5;       
+maskThr = refinement_mask(maskThr);
 
-mask(:,62:end,:)=0;
-niftiwrite(uint8(mask),'S:\MRI_Breast\data_train\NIFTI_Files_own\resized_Brest_MRI2_001_mask','Compressed', true)
+% volumes=[]; pixelSize = [1,1,1]
+% volumes(1) = sum(maskThr(:,1:round(size(maskThr,2)/2),:),'all') .* prod(pixelSize) / (10^3);
+% volumes(2) = sum(maskThr(:,round(size(maskThr,2)/2)+1:end,:),'all') .* prod(pixelSize) / (10^3)
+% 
+% h = figure;
+% imshowpair( squeeze(data(:,:,round(size(data,3)/2))) , squeeze(maskThr(:,:,round(size(maskThr,3)/2),:,:)) )
 
+maskFinal = imwarp(maskThr,(invMapping));
+maskFinal = single( imresize3(maskFinal, vel,"nearest"));
 
-%% visualization
-figure
-imshowpair( squeeze(dataR2(:,:,round(size(dataR,3)/2))) , squeeze(mask(:,:,round(size(mask1,3)/2),:,:)) )
+volumes=[]; pixelSize = diag(S)';
+volumes(1) = sum(maskFinal(:,1:round(size(maskFinal,2)/2),:),'all') .* prod(pixelSize) / (10^3);
+volumes(2) = sum(maskFinal(:,round(size(maskFinal,2)/2)+1:end,:),'all') .* prod(pixelSize) / (10^3);
+
+% % niftiwrite(uint8(mask),'S:\MRI_Breast\data_train\NIFTI_Files_own\resized_Brest_MRI2_001_mask','Compressed', true)
+
+% %% visualization
+h = figure;
+subplot(2,3,1)
+imshow(squeeze(dataR(:,:,round(size(dataR,3)*(1/3)))),[])
+subplot(2,3,2)
+imshow(squeeze(dataR(:,:,round(size(dataR,3)*(1/2)))),[])
+subplot(2,3,3)
+imshow(squeeze(dataR(:,:,round(size(dataR,3)*(2/3)))),[])
+subplot(2,3,4)
+imshowpair( squeeze(dataR(:,:,round(size(dataR,3)*(1/3) ))) , squeeze(maskFinal(:,:,round(size(maskFinal,3)*(1/3)),:,:)) )
+subplot(2,3,5)
+imshowpair( squeeze(dataR(:,:,round(size(dataR,3)*(1/2)))) , squeeze(maskFinal(:,:,round(size(maskFinal,3)*(1/2)),:,:)) )
+subplot(2,3,6)
+imshowpair( squeeze(dataR(:,:,round(size(dataR,3)*(2/3)))) , squeeze(maskFinal(:,:,round(size(maskFinal,3)*(2/3)),:,:)) )
      
 
    

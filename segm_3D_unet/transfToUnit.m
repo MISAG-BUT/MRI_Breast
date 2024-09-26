@@ -2,11 +2,6 @@ function [data, T_new] = transfToUnit(data, T, current_voxel_size, desired_voxel
 
 vel = size(data);
 
-% center = (size(data) + 1) / 2;
-
-% T = diag([1./current_voxel_size 1]) * T;
-
-
 T = inv(diag([desired_voxel_size 1])) * T;
 T(4,1:3)=0;
 

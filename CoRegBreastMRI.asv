@@ -3,11 +3,16 @@ clear all
 close all
 clc
 
-% path_data = 'D:\pro_mr_prsa\Export\DICOM';
+% path_data = 'D:\Breast_MR_I\Export';
+% path_data = 'D:\Breast_MR_II\Export';
+
+path_data = 'D:\Breast VFN 25092024\Export';
+
+D = dir([path_data '*\**\S*']);
 % D = dir([path_data '\S*']);
 
 % [path_data] = uigetdir(['S:\registrace_MRI_prs\Data']);
-[path_data] = uigetdir();
+% [path_data] = uigetdir();
 
 if path_data==0
     return
@@ -59,37 +64,62 @@ else
     end
 end
 
+multiWaitbar('Segmentation model loading...', 'Value', 0.3);
+net = load('trainedUNet_4_7.mat','netBest').netBest;
+multiWaitbar( 'CloseAll' );
+
 % h = waitbar(0,['Patient 1 from ' num2str(length(D))]);
 multiWaitbar( 'CloseAll' );
 multiWaitbar(['Patient: 0 from ' num2str(length(D))], 'Increment', 1/length(D));
 
 %%
+
 for pat = 1:length(D)
 
-multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
-multiWaitbar(['Patient: ' num2str(pat) ' from ' num2str(length(D))], 'Value', (pat-1)/length(D));
+    multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
+    multiWaitbar(['Patient: ' num2str(pat) ' from ' num2str(length(D))], 'Value', (pat-1)/length(D));
+    
+    path_1 = fullfile(D(pat).folder, D(pat).name);
+    DD = dir([path_1,'\S*']);
+    
+    path_save = fullfile( D(pat).folder, D(pat).name,  'Results');
+    mkdir(path_save)
+    
+    lenDD=[]; descriptions={};
+    for ii = 1:length(DD)
+        path_2 = fullfile(DD(ii).folder, DD(ii).name);
+        dcmDD = dir([path_2 '\I*']);
+        lenDD(ii) = length(dcmDD);
+        descriptions{ii} = dicominfo(fullfile(dcmDD(1).folder, dcmDD(1).name)).SeriesDescription;
+    end
+    
+    [~,m] = max(lenDD);
+    path_3 = fullfile(DD(m).folder, DD(m).name);
+    descriptions{m}
 
-path_1 = fullfile(D(pat).folder, D(pat).name);
-DD = dir([path_1,'\S*']);
+    % podminky pro nalezeni spravne dynamiky
+    % napr. hledani textu "dyn", pak najit druhy nejosahlejsi slozku a
+    % hledat slovo dyn
 
-path_save = fullfile( D(pat).folder, D(pat).name,  'Results');
-mkdir(path_save)
 
-lenDD=[];
-for ii = 1:length(DD)
-    path_2 = fullfile(DD(ii).folder, DD(ii).name);
-    lenDD(ii) = length(dir([path_2 '\I*']));
-end
-
-[~,m] = max(lenDD);
-path_3 = fullfile(DD(m).folder, DD(m).name);
-
+    % answ = questdlg(['There was found ' descriptions{m} ' series. Would you like to run the program?'],"Selected series",'Yes','Cancel','Yes');
+    % if isempty(answ)
+    %     return
+    % else
+    %     switch answ
+    %         case 'Cancel'
+    %             return
+    %     end
+    % end
 
 %%
+    
+    [collection] = dicoms_info(path_3, ['I*']);
 
-[collection,vel] = dicoms_info(path_3);
-% save('collection.mat','collection','vel')
-% load('collection.mat')
+    num_dyn = max(collection{:,'Dyn'});
+
+    % save('collection.mat','collection','vel')
+    % load('collection.mat')
 
 %% saving Orig dicom
 
@@ -97,11 +127,17 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
 %     multiWaitbar('Task: Resave dynamic data', 'Value', 0.1);
     multiWaitbar('Resaving dynamic data', 'Value', 0);
 
-    col = collection(collection.Dyn==1,:);    
-    [dataR,InfoR]=dicomreadVolume(col.FileName);
-    dataR = squeeze(dataR);    
+    col = collection(collection.Dyn==1,:); 
 
-    maskA =  uint8(dataR>10);
+    [dataR,InfoR]=dicomreadVolume(col.Filenames);
+    dataR = squeeze(dataR);
+
+    % medVol = medicalVolume(col.Filenames);
+    % dataR = medVol.Voxels;
+
+    T = multithresh( single(dataR(dataR>0)) ./ single(max(dataR(:))) , 3) .* single(max(dataR(:)));
+    T = T-10; T(T<0)=0;
+    maskA =  uint8( dataR>T(1) );
 
 %     path_save_1 = [path_save filesep 'orig_dyn_'  num2str(1)];
     path_save_1 = [path_save filesep 'orig_dyn'];
@@ -116,7 +152,7 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
     UID_sub_orig = dicomuid;
 
     for i = 1:size(dataR,3)
-        [~,name] = fileparts(col.FileName(i));
+        [~,name] = fileparts(col.Filenames(i));
         metadata = col.Info{i};
         metadata.SeriesDescription = [ 'NOT DIAG - ' 'Orig ' metadata.SeriesDescription ];
         metadata.SeriesInstanceUID =  UID_orig;
@@ -124,7 +160,7 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
         metadata.WindowCenter = 300;
         dicomwrite( dataR(:,:,i), [path_save_1 filesep char(name)] , metadata);
 
-        [~,name] = fileparts(col.FileName(i));
+        [~,name] = fileparts(col.Filenames(i));
         metadata = col.Info{i};
         metadata.SeriesDescription = [ 'NOT DIAG - ' 'Reg ' metadata.SeriesDescription ];
         metadata.SeriesInstanceUID =  UID_reg;
@@ -140,25 +176,28 @@ path_3 = fullfile(DD(m).folder, DD(m).name);
 
 % multiWaitbar('Breast segmentation','Value',0.0);
 multiWaitbar('Breast segmentation','Value',0.3);
-[s, ~, ~] = segmentation_breast(dataR,[collection.Info{1}.PixelSpacing(1),collection.Info{1}.PixelSpacing(1),collection.Info{1}.PixelSpacing(1)]);
-multiWaitbar('Breast segmentation','Value', 0.9);
-pasuse(0.5)
+
+[mask, volumes, hFig] = segmentation_breast_2(dataR, col.Info{1,1}, net);
+
+
+
+multiWaitbar('Breast segmentation ...','Value', 0.9);
+pause(0.5)
 
 filenameTxt = [ path_save filesep 'Breast_sizes.txt'];
-
-% appendNumbersToTxt(s(1), s(2), filenameTxt, 'Dyn_0 - ')
+appendNumbersToTxt(volumes(1), volumes(2), filenameTxt, 'Dyn_0 -')
 
 multiWaitbar('Breast segmentation','Close');
 
 %% registrace dynamik
 %     multiWaitbar('Resaving dynamic data', 'Relabel', ['Registration of 1 dynamics']);
-    multiWaitbar('Registration of 1 dynamics','Increment',1/(vel(2)-1) );
+    multiWaitbar('Registration of 1 dynamics','Increment',1/(num_dyn-1) );
 
-for dyn = 2:vel(2)
+for dyn = 2:num_dyn
     
     multiWaitbar(['Registration of ' num2str(dyn-1) ' dynamics'], 'Relabel', ['Registration of ' num2str(dyn) ' dynamics']);
 %     multiWaitbar('Task: Resave dynamic data', 'Value', 0.1);
-    multiWaitbar(['Registration of ' num2str(dyn) ' dynamics'], 'Value', (dyn-2)/(vel(2)-1) );
+    multiWaitbar(['Registration of ' num2str(dyn) ' dynamics'], 'Value', (dyn-2)/(num_dyn-1) );
 
     try
         rmdir([path_save filesep '\TempFile\'],'s');
@@ -179,8 +218,9 @@ for dyn = 2:vel(2)
 %     dataR = squeeze(dataR);
     dataM = squeeze(dataM);
 
-    maskB = uint8(dataM>10);
-    
+    T = multithresh( single(dataR(dataR>0)) ./ single(max(dataR(:))) , 3) .* single(max(dataR(:)));
+    T = T-10; T(T<0)=0;
+    maskB = uint8( dataM > T(1) );
     
     %%
     multiWaitbar('Read data','Relabel','Registration');
