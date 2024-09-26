@@ -29,8 +29,8 @@ close all
 clc
 
 % % Define paths
-path_data = 'S:\MRI_Breast\data_train\NIfTI_Files';
-path_mask = 'S:\MRI_Breast\data_train\Segmentation_Masks_NRRD';
+path_data = 'S:\MRI_Breast\data_train\NIfTI_FilesDuke_Orig';
+path_mask = 'S:\MRI_Breast\data_train\NIfTI_FilesDuke_NRRD';
 
 % Load images 
 imageFiles = dir(fullfile(path_data, '**', '*.nii.gz'));
@@ -63,7 +63,7 @@ mkdir(output_folder)
 desired_voxel_size = [1 1 1]; % 2mm x 2mm x 2mm
 
 % i = 10;
-for i = 10 %1:length(imageFiles)
+for i = 1:length(imageFiles)
 % for i = 1:2
 
     % Load NIfTI file

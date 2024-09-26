@@ -8,7 +8,7 @@ classdef utils_net_train
         TP = TP.sum('all');
         FP = (1-targets) .* Y;
         FP = FP.sum('all');
-        FN = targets .* (1-Y);
+        FN = targets(:,:,1,:) .* (Y(:,:,2,:));
         FN = FN.sum('all');
         loss = 1 - (  (2*(TP)) / (2*(TP) + FP + FN) );
     end
@@ -59,7 +59,7 @@ classdef utils_net_train
         end
         if state(2) < 0.8
             % img = uint16( ((single(img)/500).^(state(3)*0.1+1))*500);
-            img = uint16( ((single(img)/500).^(state(3)*0.2+1))*500);
+            img = uint16( ((single(img)/500).^(state(3)*0.5+1))*500);
         end
     end
     

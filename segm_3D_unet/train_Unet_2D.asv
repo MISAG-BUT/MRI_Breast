@@ -10,8 +10,8 @@ imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_3';
 % maskFolder = 'data\forTraining\training\binary_images';
 
 imgds = dir([imageFolder filesep '*.nii.gz']);
-maskds = imgds(contains({imgds.name}, '_mask.'));
-imgds = imgds(~contains({imgds.name}, '_mask.'));
+maskds = imgds(contains({imgds.name}, '_mask'));
+imgds = imgds(~contains({imgds.name}, '_mask'));
 
 rng(77)
 idx = randperm(numel(imgds) );
@@ -67,11 +67,11 @@ splitnum = round(numel(imgds2)*0.88);
 imgdsVal = [imgdsVal; imgds2(splitnum:end)];
 maskdsVal = [maskdsVal; maskds2(splitnum:end)];
 
-imgds = [imgds; imgds2(1:splitnum-1)];
-maskds = [maskds; maskds2(1:splitnum-1)];
+% imgds = [imgds; imgds2(1:splitnum-1)];
+% maskds = [maskds; maskds2(1:splitnum-1)];
 
-% imgds = [imgds; imgds2];
-% maskds = [maskds; maskds2];
+imgds = [imgds; imgds2];
+maskds = [maskds; maskds2];
 
 
 %% training 
@@ -157,9 +157,8 @@ while epoch < numEpochs && ~monitor.Stop
         [X, T] = utils_net_train.readSlices(imgds(idx), maskds(idx), inputSize, miniBatchSize);
 
         % onehotcoding
-        Toh = T(:,:,1,:)==0;
-        Toh(:,:,2,:) = T(:,:,1,:)==1;
-        Toh(:,:,3,:) = T(:,:,1,:)==2;
+        Toh = T(:,:,1,:)==1;
+        Toh(:,:,2,:) = T(:,:,1,:)==2;
         Toh = double(Toh);
 
         % Convert mini-batch of data to a dlarray.
@@ -184,19 +183,12 @@ while epoch < numEpochs && ~monitor.Stop
             valDice = 0; valLoss = 0;
             for idxVal = 1:numel(imgdsVal)
                 [XVal, TVal] = utils_net_train.readSlicesVal(imgdsVal(idxVal), maskdsVal(idxVal), inputSize, numSlicesVal);
-
-                 % onehotcoding
-                TVoh = TVal(:,:,1,:)==0;
-                TVoh(:,:,2,:) = T(:,:,1,:)==1;
-                TVoh(:,:,3,:) = T(:,:,1,:)==2;
-                TVoh = double(TVoh);
-
                 XVal = dlarray(single(XVal),"SSCB");
-                TVoh = dlarray(single(TVoh),"SSCB");
+                TVal = dlarray(single(TVal),"SSCB");
                 if canUseGPU
                     XVal = gpuArray(XVal);
                 end
-                [vloss,~,vGDice] = dlfeval(@utils_net_train.modelLoss,net,XVal,TVoh);
+                [vloss,~,vGDice] = dlfeval(@utils_net_train.modelLoss,net,XVal,TVal);
                 valDice = valDice + (vGDice) /numel(imgdsVal);
                 valLoss = valLoss + (vloss) /numel(imgdsVal);
             end
