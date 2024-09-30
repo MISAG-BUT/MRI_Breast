@@ -10,7 +10,8 @@ classdef utils_net_train
         FP = FP.sum('all');
         FN = targets .* (1-Y);
         FN = FN.sum('all');
-        loss = 1 - (  (2*(TP)) / (2*(TP) + FP + FN) );
+        loss = 1 - (  (2*(TP) + eps) / (2*(TP) + FP + FN + eps) );
+        % loss = 1 - (  (2*(TP)) / (2*(TP) + FP + FN) );
     end
 
 
@@ -23,8 +24,7 @@ classdef utils_net_train
     function [loss] = generalizedDiceLoss( Y, targets) 
         targets(isnan(targets)) = 0;
         Y(isnan(Y)) = 0;
-        % targets(:,:,2,:) = 1-targets(:,:,1,:);
-        GD = generalizedDice(targets, Y);
+        GD = generalizedDice(Y, targets);
         % GD = dice(targets, Y);
         loss = 1 - GD.mean('all');
     end
@@ -33,10 +33,13 @@ classdef utils_net_train
         % % Forward data through network.
         [Y] = forward(net,X);
         % % Calculate cross-entropy loss.
-        % loss = utils_net_train.DiceLoss(Y,T);
-        % Acc = 1 - utils_net_train.generalizedDiceLoss(Y,T);
         loss = utils_net_train.generalizedDiceLoss(Y,T);
+        Y = Y(:,:,2:end,:);
+        T = T(:,:,2:end,:);
         Acc = 1 - utils_net_train.DiceLoss(Y>0.5,T);
+        % if Acc==0
+        %     Acc
+        % end
         % % Calculate gradients of loss with respect to learnable parameters.
         gradients = dlgradient(loss,net.Learnables);
     end
@@ -90,7 +93,6 @@ classdef utils_net_train
                         masks(:,:,1,k) = imcrop(mask,rect);
                     end
                 end
-
                 k = k+1;
             end
             % delete medVolData

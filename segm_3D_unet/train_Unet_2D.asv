@@ -10,22 +10,24 @@ imageFolder = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_3';
 % maskFolder = 'data\forTraining\training\binary_images';
 
 imgds = dir([imageFolder filesep '*.nii.gz']);
-maskds = imgds(contains({imgds.name}, '_mask'));
-imgds = imgds(~contains({imgds.name}, '_mask'));
+maskds = imgds(contains({imgds.name}, '_mask.'));
+imgds = imgds(~contains({imgds.name}, '_mask.'));
 
 rng(77)
 idx = randperm(numel(imgds) );
 imgds = imgds(idx);
 maskds = maskds(idx);
 
-% imgds = imgds(1:20);
-% maskds = maskds(1:20);
+imgds = imgds(1:10);
+maskds = maskds(1:10);
 
 splitnum = round(numel(imgds)*0.88);
 imgdsVal = imgds(splitnum:end);
 maskdsVal = maskds(splitnum:end);
 imgds = imgds(1:splitnum-1);
 maskds = maskds(1:splitnum-1);
+
+
 
 %% datat FNUSA I
 % Set paths to the image and mask folders
@@ -66,12 +68,23 @@ splitnum = round(numel(imgds2)*0.88);
 
 imgdsVal = [imgdsVal; imgds2(splitnum:end)];
 maskdsVal = [maskdsVal; maskds2(splitnum:end)];
-
+% 
 % imgds = [imgds; imgds2(1:splitnum-1)];
 % maskds = [maskds; maskds2(1:splitnum-1)];
 
-imgds = [imgds; imgds2];
-maskds = [maskds; maskds2];
+imgds = [ imgds2(1:splitnum-1)];
+maskds = [ maskds2(1:splitnum-1)];
+
+% imgds = [imgds; imgds2];
+% maskds = [maskds; maskds2];
+
+% imgds = [imgds2];
+% maskds = [maskds2];
+
+idxImplants = [3,11,17,20,22,23,28];% implants
+% idxImplants = [idxImplants, 1, 2, 34,35,15,16];
+imgds = imgds(idxImplants);
+maskds = maskds(idxImplants);
 
 
 %% training 
@@ -81,11 +94,18 @@ maskds = [maskds; maskds2];
 
 % plot(net)
 
-inputSize = [256, 256, 3];
+name_version = 'trainedUNet_6_0';
+% description = ['ucene z 5_0'];
+description = ['input i s maskou breast z verye 4.7, segmetnace jen implantatu'];
+% description = ['from scratch instancni ucene jen na pac s implants = bez implants z train odstranena, instancni segm bez input masky prsu'];
 
-net = unet(inputSize, 3, EncoderDepth=3, NumFirstEncoderFilters=16);
+inputSize = [256, 256, 4];
+% inputSize = [256, 256, 3];
 
-% net = load('trainedUNet_4_7.mat','net').net;
+net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=16);
+% net = unet(inputSize, 3, EncoderDepth=3, NumFirstEncoderFilters=16);
+
+% net = load('trainedUNet_5_0.mat','net').net;
 
 %% Traininig parameters
 
@@ -93,11 +113,11 @@ SlicesBatchSize = 16;
 PatBatchSize = 2;
 
 miniBatchSize = PatBatchSize * SlicesBatchSize;
-numEpochs = 300;
+numEpochs = 50;
 numSlicesVal = 32;
 
-initialLearnRate = 0.005;
-num_cyclic = 5;
+initialLearnRate = 0.0001;
+num_cyclic = 4;
 
 % decayLearnRate = 0.0005;
 % num_step = 5 ;
@@ -109,7 +129,7 @@ averageGrad = [];
 averageSqGrad = [];
 numIterations = numEpochs * numIterationsPerEpoch;
 
-learnRates = (linspace(1, 0.05 , numIterations));
+learnRates = (linspace(1, 0.05 , numIterations)).^4;
 C = (cos(2*pi*num_cyclic*linspace(0,1,numIterations)) +1.5 )/2.5;
 
 learnRates = initialLearnRate .* C .* learnRates;
@@ -119,7 +139,7 @@ plot(learnRates)
 % figure
 % plot(initialLearnRate./(1 + decayLearnRate * [1:numIterations]))
 
-Val_iter = round(numIterationsPerEpoch * (2));
+Val_iter = round(numIterationsPerEpoch * (5));
 
 %% Train the U-Net network
 
@@ -157,9 +177,15 @@ while epoch < numEpochs && ~monitor.Stop
         [X, T] = utils_net_train.readSlices(imgds(idx), maskds(idx), inputSize, miniBatchSize);
 
         % onehotcoding
-        Toh = T(:,:,1,:)==1;
-        Toh(:,:,2,:) = T(:,:,1,:)==2;
-        Toh = double(Toh);
+        % Toh = T(:,:,1,:)==0;  % for both
+        % Toh(:,:,2,:) = T(:,:,1,:)==1;
+        % Toh(:,:,3,:) = T(:,:,1,:)==2;
+
+        Toh = T(:,:,1,:)<2;    % for implants only
+        Toh(:,:,2,:) = T(:,:,1,:)==2;    
+        Toh = single(Toh);
+
+        X(:,:,4,:) = T(:,:,1,:)>0;
 
         % Convert mini-batch of data to a dlarray.
         X = dlarray(single(X),"SSCB");
@@ -183,12 +209,24 @@ while epoch < numEpochs && ~monitor.Stop
             valDice = 0; valLoss = 0;
             for idxVal = 1:numel(imgdsVal)
                 [XVal, TVal] = utils_net_train.readSlicesVal(imgdsVal(idxVal), maskdsVal(idxVal), inputSize, numSlicesVal);
+
+                % onehotcoding
+                % TVoh = TVal(:,:,1,:)==0;    % for breast + implants
+                % TVoh(:,:,2,:) = TTVal(:,:,1,:)==1; 
+                % TVoh(:,:,3,:) = TTVal(:,:,1,:)==2;
+
+                TVoh = TVal(:,:,1,:)<2;    % for implants only
+                TVoh(:,:,2,:) = TVal(:,:,1,:)==2;   
+                TVoh = single(TVoh);
+
+                XVal(:,:,4,:) = TVal(:,:,1,:)>0;
+
                 XVal = dlarray(single(XVal),"SSCB");
-                TVal = dlarray(single(TVal),"SSCB");
+                TVoh = dlarray(single(TVoh),"SSCB");
                 if canUseGPU
                     XVal = gpuArray(XVal);
                 end
-                [vloss,~,vGDice] = dlfeval(@utils_net_train.modelLoss,net,XVal,TVal);
+                [vloss,~,vGDice] = dlfeval(@utils_net_train.modelLoss,net,XVal,TVoh);
                 valDice = valDice + (vGDice) /numel(imgdsVal);
                 valLoss = valLoss + (vloss) /numel(imgdsVal);
             end
@@ -200,6 +238,7 @@ while epoch < numEpochs && ~monitor.Stop
             if valDice>ValBest
                 netBest = net;
                 ValBest = valDice;
+                save(['segm_3D_unet\' name_version '.mat'], 'net','netBest','monitor', 'description','imgdsVal', 'imgds');
             end
         else
             % Update the training progress monitor.
@@ -214,7 +253,5 @@ while epoch < numEpochs && ~monitor.Stop
     end
 end
 
-description = ['instacni segmentace from scratch spolu s prsem a ipmlantaty'];
-% description = ['douceni na FNUSA datech spolu se vsemi public daty, vetsi krok'];
 % Save the trained network
-save('segm_3D_unet\trainedUNet_5_0.mat', 'net','netBest','monitor', 'description','imgdsVal', 'imgds');
+save(['segm_3D_unet\' name_version '.mat'], 'net','netBest','monitor', 'description','imgdsVal', 'imgds');
