@@ -5,12 +5,13 @@ classdef utils_net_train
 
     function [loss] = DiceLoss( Y, targets)    
         TP = targets .* Y;
-        TP = TP.sum('all');
+        TP = TP.sum([1,2]);
         FP = (1-targets) .* Y;
-        FP = FP.sum('all');
+        FP = FP.sum([1,2]);
         FN = targets .* (1-Y);
-        FN = FN.sum('all');
-        loss = 1 - (  (2*(TP) + eps) / (2*(TP) + FP + FN + eps) );
+        FN = FN.sum([1,2]);
+        loss = (  (2.*(TP) + eps) ./ (2*(TP) + FP + FN + eps) );
+        loss = 1 - loss.mean("all");
         % loss = 1 - (  (2*(TP)) / (2*(TP) + FP + FN) );
     end
 
@@ -36,7 +37,7 @@ classdef utils_net_train
         loss = utils_net_train.generalizedDiceLoss(Y,T);
         Y = Y(:,:,2:end,:);
         T = T(:,:,2:end,:);
-        Acc = 1 - utils_net_train.DiceLoss(Y>0.5,T);
+        Acc = 1 - utils_net_train.DiceLoss(single(Y>0.5),T);
         % if Acc==0
         %     Acc
         % end

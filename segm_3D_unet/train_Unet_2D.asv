@@ -81,10 +81,10 @@ maskds = [ maskds2(1:splitnum-1)];
 % imgds = [imgds2];
 % maskds = [maskds2];
 
-idxImplants = [3,11,17,20,22,23,28];% implants
-% idxImplants = [idxImplants, 1, 2, 34,35,15,16];
-imgds = imgds(idxImplants);
-maskds = maskds(idxImplants);
+% idxImplants = [3,11,17,20,22,23,28];% implants
+% idxImplants = [idxImplants, 1, 2, 34,35,15,16,18,25];
+% imgds = imgds(idxImplants);
+% maskds = maskds(idxImplants);
 
 
 %% training 
@@ -94,18 +94,19 @@ maskds = maskds(idxImplants);
 
 % plot(net)
 
-name_version = 'trainedUNet_6_0';
-% description = ['ucene z 5_0'];
-description = ['input i s maskou breast z verye 4.7, segmetnace jen implantatu'];
+name_version = 'trainedUNet_6_8';
+
+description = ['douceni 6_7 - maskovani rezu s GT maskou breast, namisto ctvrteho kanalu, k implants data pridane i dalsi non-implants data (all FNUSA data), bin segm'];
+% description = ['dalsi douceni, vic data bez implants, input (4 channels) i s maskou breast - maska GT, segmentace jen implantatu'];
 % description = ['from scratch instancni ucene jen na pac s implants = bez implants z train odstranena, instancni segm bez input masky prsu'];
 
-inputSize = [256, 256, 4];
-% inputSize = [256, 256, 3];
+% inputSize = [256, 256, 4];
+inputSize = [256, 256, 3];
 
-net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=16);
+% net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=16);
 % net = unet(inputSize, 3, EncoderDepth=3, NumFirstEncoderFilters=16);
 
-% net = load('trainedUNet_5_0.mat','net').net;
+net = load('trainedUNet_6_7.mat','net').net;
 
 %% Traininig parameters
 
@@ -113,26 +114,30 @@ SlicesBatchSize = 16;
 PatBatchSize = 2;
 
 miniBatchSize = PatBatchSize * SlicesBatchSize;
-numEpochs = 50;
+numEpochs = 500;
 numSlicesVal = 32;
 
-initialLearnRate = 0.0001;
-num_cyclic = 4;
+initialLearnRate = 0.00001;
+num_cyclic = 2;
+decreasing = 50;
 
 % decayLearnRate = 0.0005;
 % num_step = 5 ;
 % decreasingLR = 100;
 
 numObservations = numel(imgds);
-numIterationsPerEpoch = floor(numObservations./PatBatchSize);
+numIterationsPerEpoch = floor(numObservations ./ PatBatchSize);
 averageGrad = [];
 averageSqGrad = [];
 numIterations = numEpochs * numIterationsPerEpoch;
 
-learnRates = (linspace(1, 0.05 , numIterations)).^4;
+fct_nonlinear = 2;
+learnRates = ((((linspace(1, 0.0, numIterations)).^fct_nonlinear) ./(1+1/decreasing))  + 1/decreasing ); 
 C = (cos(2*pi*num_cyclic*linspace(0,1,numIterations)) +1.5 )/2.5;
+% C = (cos(2*pi*num_cyclic*linspace(0,1,numIterations)) );
 
 learnRates = initialLearnRate .* C .* learnRates;
+% learnRates = C;
 figure
 plot(learnRates)
 
@@ -185,7 +190,7 @@ while epoch < numEpochs && ~monitor.Stop
         Toh(:,:,2,:) = T(:,:,1,:)==2;    
         Toh = single(Toh);
 
-        X(:,:,4,:) = T(:,:,1,:)>0;
+        X(:,:,2,:) = X(:,:,2,:) .* single(T(:,:,1,:)>0);
 
         % Convert mini-batch of data to a dlarray.
         X = dlarray(single(X),"SSCB");
@@ -219,7 +224,7 @@ while epoch < numEpochs && ~monitor.Stop
                 TVoh(:,:,2,:) = TVal(:,:,1,:)==2;   
                 TVoh = single(TVoh);
 
-                XVal(:,:,4,:) = TVal(:,:,1,:)>0;
+                XVal(:,:,2,:) = XVal(:,:,2,:) .* single(TVal(:,:,1,:)>0);
 
                 XVal = dlarray(single(XVal),"SSCB");
                 TVoh = dlarray(single(TVoh),"SSCB");
