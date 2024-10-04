@@ -20,7 +20,7 @@ clc
 % % dicomFiles = 'D:\Breast_MR\Export\DICOM\S41910\S6010';
 % % dicomFiles = 'D:\Breast_MR\Export\DICOM\S42640\S6010';
 
-for d = 1:2
+for d = 2
 
     if d==1
         path_to_dicom = 'D:\Breast_MR_I\Export\DICOM\';
@@ -35,7 +35,7 @@ for d = 1:2
 
 %%
 
-for pat = 1:length(pat_dir)
+for pat = 17:length(pat_dir)
     
     %% loading for dicom FNUSA
 

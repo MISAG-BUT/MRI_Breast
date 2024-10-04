@@ -102,7 +102,7 @@ for i = [3,11,17,20,22,23,28]
     IDX(IDX(:,1)==i,3) = 0;
 end
 
-IDX = load('trainedUNet_6_8.mat','IDX').IDX;
+% IDX = load('trainedUNet_6_8.mat','IDX').IDX;
 
 
 %% training 
@@ -112,9 +112,9 @@ IDX = load('trainedUNet_6_8.mat','IDX').IDX;
 
 % plot(net)
 
-name_version = 'trainedUNet_6_8';
+name_version = 'trainedUNet_7_0';
 
-description = ['dataMining batch KCL, ucene z 6.7, maskovani rezu s GT maskou breast, namisto ctvrteho kanalu, k implants data pridane i dalsi non-implants data (all FNUSA data), bin segm'];
+description = ['instanci segm, all FNUSA data, dataMining batch KCL, maskovani rezu s GT maskou breast'];
 % description = ['dalsi douceni, vic data bez implants, input (4 channels) i s maskou breast - maska GT, segmentace jen implantatu'];
 % description = ['from scratch instancni ucene jen na pac s implants = bez implants z train odstranena, instancni segm bez input masky prsu'];
 
@@ -122,9 +122,9 @@ description = ['dataMining batch KCL, ucene z 6.7, maskovani rezu s GT maskou br
 inputSize = [256, 256, 3];
 
 % net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=16);
-% net = unet(inputSize, 3, EncoderDepth=3, NumFirstEncoderFilters=16);
+net = unet(inputSize, 3, EncoderDepth=3, NumFirstEncoderFilters=16);
 
-net = load('trainedUNet_6_8.mat','net').net;
+% net = load('trainedUNet_6_8.mat','net').net;
 
 %% Traininig parameters
 
@@ -135,11 +135,11 @@ net = load('trainedUNet_6_8.mat','net').net;
 miniBatchSize = 32;
 sigma = 0.2;
 
-numEpochs = 100;
+numEpochs = 300;
 numSlicesVal = 32;
 
-initialLearnRate = 0.0001;
-num_cyclic = 2;
+initialLearnRate = 0.001;
+num_cyclic = 3;
 decreasing = 50;
 
 % decayLearnRate = 0.0005;
@@ -216,13 +216,13 @@ while epoch < numEpochs && ~monitor.Stop
 
 
         % onehotcoding
-        % Toh = T(:,:,1,:)==0;  % for both
-        % Toh(:,:,2,:) = T(:,:,1,:)==1;
-        % Toh(:,:,3,:) = T(:,:,1,:)==2;
+        Toh = T(:,:,1,:)==0;  % for both
+        Toh(:,:,2,:) = T(:,:,1,:)==1;
+        Toh(:,:,3,:) = T(:,:,1,:)==2;
 
-        Toh = T(:,:,1,:)<2;    % for implants only
-        Toh(:,:,2,:) = T(:,:,1,:)==2;
-        Toh = single(Toh);
+        % Toh = T(:,:,1,:)<2;    % for implants only
+        % Toh(:,:,2,:) = T(:,:,1,:)==2;
+        % Toh = single(Toh);
 
         X(:,:,2,:) = X(:,:,2,:) .* single(T(:,:,1,:)>0);
 
@@ -267,13 +267,13 @@ while epoch < numEpochs && ~monitor.Stop
                 [XVal, TVal] = utils_net_train.readSlicesVal(imgdsVal(idxVal), maskdsVal(idxVal), inputSize, numSlicesVal);
 
                 % onehotcoding
-                % TVoh = TVal(:,:,1,:)==0;    % for breast + implants
-                % TVoh(:,:,2,:) = TTVal(:,:,1,:)==1; 
-                % TVoh(:,:,3,:) = TTVal(:,:,1,:)==2;
+                TVoh = TVal(:,:,1,:)==0;    % for breast + implants
+                TVoh(:,:,2,:) = TTVal(:,:,1,:)==1; 
+                TVoh(:,:,3,:) = TTVal(:,:,1,:)==2;
 
-                TVoh = TVal(:,:,1,:)<2;    % for implants only
-                TVoh(:,:,2,:) = TVal(:,:,1,:)==2;   
-                TVoh = single(TVoh);
+                % TVoh = TVal(:,:,1,:)<2;    % for implants only
+                % TVoh(:,:,2,:) = TVal(:,:,1,:)==2;   
+                % TVoh = single(TVoh);
 
                 XVal(:,:,2,:) = XVal(:,:,2,:) .* single(TVal(:,:,1,:)>0);
 
@@ -310,4 +310,4 @@ while epoch < numEpochs && ~monitor.Stop
 end
 
 % Save the trained network
-save(['segm_3D_unet\' name_version '.mat'], 'net','netBest','monitor', 'description','imgdsVal', 'imgds');
+save(['segm_3D_unet\' name_version '.mat'], 'net','netBest','monitor', 'description','imgdsVal', 'imgds', 'IDX');
