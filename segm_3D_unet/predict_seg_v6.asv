@@ -24,18 +24,18 @@ for d = 1:2
 
     if d==1
         path_to_dicom = 'D:\Breast_MR_I\Export\DICOM\';
-        path_to_mask = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_6';
-        pat_dir = dir([path_to_dicom 'S*']);
-        pat_dir = pat_dir(1:20);
+        path_to_mask = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_4';
     elseif d==2
         path_to_dicom = 'D:\Breast_MR_II\Export\DICOM\';
-        path_to_mask = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_7';
-        pat_dir = dir([path_to_dicom 'S*']);
+        path_to_mask = 'D:\Breast_MR_I\Export\DICOM\NIfTI_Files_resaved_5';
     end
+
+pat_dir = dir([path_to_dicom 'S*']);
+
 
 %%
 
-for pat = 1:length(pat_dir)
+for pat = 1 %1:length(pat_dir)
     
     %% loading for dicom FNUSA
 
@@ -78,7 +78,6 @@ for pat = 1:length(pat_dir)
 
     maskGT = niftiread([path_to_mask filesep fName '_mask-labels.nii.gz'  ]);
     maskGT = flip(maskGT,2);
-    maskGT = imresize3(maskGT,size(data),'nearest');
     
     %% splitting and prediction
 
@@ -123,10 +122,9 @@ for pat = 1:length(pat_dir)
 
                 [pred] = predict(net,X);
                 pred = extractdata(pred);
-                pred = pred(:,:,2,1);
                 % mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) + pred(:,:,1,1);
                 % rect_mask(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = rect_mask(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) + 1;
-                mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = max( mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) , pred);
+                mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) = max( mask_pred(rect(2):rect(2)+rect(4), rect(1):rect(1)+rect(3)) , pred(:,:,2,1) );
             end
             % mask(:,:,slice) = mask_pred ./ rect_mask;
             mask(:,:,slice) = mask_pred;
@@ -168,7 +166,7 @@ for pat = 1:length(pat_dir)
             if d==1
                 path_save = ['S:\MRI_Breast\Data_predicted\BestNet_v6\MR_Breast_I\predicted_6_' num2str(verse) filesep ];
             elseif d==2
-                path_save = ['S:\MRI_Breast\Data_predicted\BestNet_v6\MR_Breast_II\predicted_6_' num2str(verse) filesep ];
+                path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_II\predicted_6_' num2str(verse) filesep ];
             end
         
         file_save = [pat_dir(pat).name];

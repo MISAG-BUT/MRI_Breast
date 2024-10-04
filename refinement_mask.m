@@ -6,13 +6,14 @@ SE = create_sphere(2);
 SE = SE(:,:,3);
 mask = imclose(mask, SE);
 mask = imfill(mask,8,"holes");
-mask = imerode(mask,SE);
-CC = bwconncomp(mask);
-numPixels = cellfun(@numel, CC.PixelIdxList);
-[~, idx] = max(numPixels);
-mask2 = false(size(mask));
-mask2(CC.PixelIdxList{idx}) = true;
-mask = imdilate(mask2,SE);
+
+% mask = imerode(mask,SE);
+% CC = bwconncomp(mask);
+% numPixels = cellfun(@numel, CC.PixelIdxList);
+% [~, idx] = max(numPixels);
+% mask2 = false(size(mask));
+% mask2(CC.PixelIdxList{idx}) = true;
+% mask = imdilate(mask2,SE);
 
 mask = permute(mask,[3,2,1]);
 mask = imclose(mask, SE);
