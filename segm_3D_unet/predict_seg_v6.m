@@ -24,8 +24,10 @@ for d = 1:2
 
     if d==1
         path_to_dicom = 'D:\Breast_MR_I\Export\DICOM\';
+        path_to_mask = 'D:\Breast_MR_I\Export\DICOM\';
     elseif d==2
         path_to_dicom = 'D:\Breast_MR_II\Export\DICOM\';
+        path_to_mask = 'D:\Breast_MR_I\Export\DICOM\';
     end
 
 pat_dir = dir([path_to_dicom 'S*']);
@@ -33,7 +35,7 @@ pat_dir = dir([path_to_dicom 'S*']);
 
 %%
 
-for pat = 1:length(pat_dir)
+for pat = 1 %1:length(pat_dir)
     
     %% loading for dicom FNUSA
 
@@ -151,8 +153,11 @@ for pat = 1:length(pat_dir)
         % imfuse5(data, maskFinal)
         % imshow5(lbl)
 
-        % path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_I\predicted_4_' num2str(verse) filesep ];
-        path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_II\predicted_4_' num2str(verse) filesep ];
+            if d==1
+                path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_I\predicted_4_' num2str(verse) filesep ];
+            elseif d==2
+                path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_II\predicted_4_' num2str(verse) filesep ];
+            end
         
         file_save = [pat_dir(pat).name];
         mkdir(path_save)
@@ -169,10 +174,11 @@ for pat = 1:length(pat_dir)
         if verse==0
             niftiwrite(int16(data),[path_save file_save '_orig'],nii_info,"Compressed",true)
         end
+
         niftiwrite(int16(maskFinal),[path_save file_save '_mask_pp'],nii_info,"Compressed",true)
         niftiwrite(int16(maskThr),[path_save file_save '_mask'],nii_info,"Compressed",true)
     
     end
-    % end
+    end
 
 end

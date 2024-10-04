@@ -86,6 +86,22 @@ maskds = [ maskds2(1:splitnum-1)];
 % imgds = imgds(idxImplants);
 % maskds = maskds(idxImplants);
 
+IDX = [];
+poz = 1;
+for i = 1:length(imgds)
+    medVolData = medicalVolume([imgds(i).folder filesep imgds(i).name]);
+    num_slice = medVolData.NumTransverseSlices - 4;
+    IDX(poz:poz+num_slice-1,1) = i;
+    IDX(poz:poz+num_slice-1,2) = [3:medVolData.NumTransverseSlices-2];
+    poz = poz+num_slice;
+end
+IDX(1:end,4) = [1:size(IDX,1)];
+
+IDX(1:end,3) = 1;
+for i = [3,11,17,20,22,23,28]
+    IDX(IDX(:,1)==i,3) = 0;
+end
+
 
 %% training 
 
@@ -96,7 +112,7 @@ maskds = [ maskds2(1:splitnum-1)];
 
 name_version = 'trainedUNet_6_8';
 
-description = ['douceni 6_7 - maskovani rezu s GT maskou breast, namisto ctvrteho kanalu, k implants data pridane i dalsi non-implants data (all FNUSA data), bin segm'];
+description = ['dataMining batch KCL, ucene z 6.7, maskovani rezu s GT maskou breast, namisto ctvrteho kanalu, k implants data pridane i dalsi non-implants data (all FNUSA data), bin segm'];
 % description = ['dalsi douceni, vic data bez implants, input (4 channels) i s maskou breast - maska GT, segmentace jen implantatu'];
 % description = ['from scratch instancni ucene jen na pac s implants = bez implants z train odstranena, instancni segm bez input masky prsu'];
 
@@ -110,14 +126,17 @@ net = load('trainedUNet_6_7.mat','net').net;
 
 %% Traininig parameters
 
-SlicesBatchSize = 16;
-PatBatchSize = 2;
+% SlicesBatchSize = 16;
+% PatBatchSize = 2;
+% miniBatchSize = PatBatchSize * SlicesBatchSize;
 
-miniBatchSize = PatBatchSize * SlicesBatchSize;
-numEpochs = 500;
+miniBatchSize = 32;
+sigma = 0.2;
+
+numEpochs = 100;
 numSlicesVal = 32;
 
-initialLearnRate = 0.00001;
+initialLearnRate = 0.0001;
 num_cyclic = 2;
 decreasing = 50;
 
@@ -126,7 +145,9 @@ decreasing = 50;
 % decreasingLR = 100;
 
 numObservations = numel(imgds);
-numIterationsPerEpoch = floor(numObservations ./ PatBatchSize);
+% numIterationsPerEpoch = floor(numObservations ./ PatBatchSize);
+numIterationsPerEpoch = round( 10 /100 * size(IDX,1) / miniBatchSize);    % 10% dat na jednu epochu
+
 averageGrad = [];
 averageSqGrad = [];
 numIterations = numEpochs * numIterationsPerEpoch;
@@ -144,7 +165,7 @@ plot(learnRates)
 % figure
 % plot(initialLearnRate./(1 + decayLearnRate * [1:numIterations]))
 
-Val_iter = round(numIterationsPerEpoch * (5));
+Val_iter = round(numIterationsPerEpoch * (1));
 
 %% Train the U-Net network
 
@@ -163,9 +184,13 @@ while epoch < numEpochs && ~monitor.Stop
     epoch = epoch + 1;
 
     % Shuffle data.
-    idx = randperm(numel(imgds));
-    imgds = imgds(idx);
-    maskds = maskds(idx);
+    % idx = randperm(numel(imgds));
+    % imgds = imgds(idx);
+    % maskds = maskds(idx);
+
+    mu1 = size(IDX,1) / 100;
+    sigma1 = sigma * size(IDX,1);
+
 
     i = 0;
     while i < numIterationsPerEpoch && ~monitor.Stop
@@ -177,9 +202,15 @@ while epoch < numEpochs && ~monitor.Stop
         learnRate = learnRates(iteration);
 
         % Read mini-batch of data 
-        idx = (i-1)*PatBatchSize+1:i*PatBatchSize;
+        % idx = (i-1)*PatBatchSize+1:i*PatBatchSize;
         
-        [X, T] = utils_net_train.readSlices(imgds(idx), maskds(idx), inputSize, miniBatchSize);
+        idx_Rand = round( utils_net_train.rand_norm_distrb(miniBatchSize, mu1, sigma1, [0, size(IDX,1)]));
+        idx_Rand(idx_Rand==1)
+        idx_orig = IDX(idx_Rand, 4);
+        
+        % [X, T] = utils_net_train.readSlices(imgds(idx), maskds(idx), inputSize, miniBatchSize);
+        [X, T] = utils_net_train.readSlicesDM(imgds, maskds, IDX(idx_orig,[1:2]), inputSize);
+
 
         % onehotcoding
         % Toh = T(:,:,1,:)==0;  % for both
@@ -187,7 +218,7 @@ while epoch < numEpochs && ~monitor.Stop
         % Toh(:,:,3,:) = T(:,:,1,:)==2;
 
         Toh = T(:,:,1,:)<2;    % for implants only
-        Toh(:,:,2,:) = T(:,:,1,:)==2;    
+        Toh(:,:,2,:) = T(:,:,1,:)==2;
         Toh = single(Toh);
 
         X(:,:,2,:) = X(:,:,2,:) .* single(T(:,:,1,:)>0);
@@ -203,7 +234,20 @@ while epoch < numEpochs && ~monitor.Stop
 
         % Evaluate the model loss and gradients using dlfeval and the
         % modelLoss function.
-        [loss,gradients, GDice] = dlfeval(@utils_net_train.modelLoss,net,X,Toh);
+        [loss,gradients, GDice, Dice_batch] = dlfeval(@utils_net_train.modelLossDM,net,X,Toh);
+
+        IDX(idx_Rand,3) = squeeze(extractdata(Dice_batch));
+        [IDX] = sortrows(IDX,3,"ascend");
+
+        pd = makedist('Normal', 'mu', mu1, 'sigma', sigma1);
+        figure(7);
+        plot(IDX(:, 3));
+        x = linspace(0, size(IDX, 1), size(IDX, 1));
+        y = pdf(pd, x);
+        hold on;
+        plot(y / max(y)); % Normalize the y values
+        ylim([0.0, 1.1]);
+        hold off;
 
         % Update the network parameters using the Adam optimizer.
         [net,averageGrad,averageSqGrad] = adamupdate(net,gradients,averageGrad,averageSqGrad,iteration,learnRate);
@@ -211,6 +255,10 @@ while epoch < numEpochs && ~monitor.Stop
         % Validation every 20th iteration
         % numSlicesVal = 8;
         if mod(iteration, Val_iter) == 1
+
+            ind100 = find(IDX(:,3)==1);
+            IDX( ind100 ,:) =  IDX( ind100(randperm(length(ind100)) ) , :);
+
             valDice = 0; valLoss = 0;
             for idxVal = 1:numel(imgdsVal)
                 [XVal, TVal] = utils_net_train.readSlicesVal(imgdsVal(idxVal), maskdsVal(idxVal), inputSize, numSlicesVal);

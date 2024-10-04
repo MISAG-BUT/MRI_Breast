@@ -3,7 +3,7 @@
 classdef utils_net_train
     methods (Static)
 
-    function [loss] = DiceLoss( Y, targets)    
+    function [loss, lossBatch] = DiceLoss( Y, targets)    
         TP = targets .* Y;
         TP = TP.sum([1,2]);
         FP = (1-targets) .* Y;
@@ -11,6 +11,7 @@ classdef utils_net_train
         FN = targets .* (1-Y);
         FN = FN.sum([1,2]);
         loss = (  (2.*(TP) + eps) ./ (2*(TP) + FP + FN + eps) );
+        lossBatch = 1 - loss;
         loss = 1 - loss.mean("all");
         % loss = 1 - (  (2*(TP)) / (2*(TP) + FP + FN) );
     end
@@ -37,10 +38,25 @@ classdef utils_net_train
         loss = utils_net_train.generalizedDiceLoss(Y,T);
         Y = Y(:,:,2:end,:);
         T = T(:,:,2:end,:);
-        Acc = 1 - utils_net_train.DiceLoss(single(Y>0.5),T);
+        [acc,~] = utils_net_train.DiceLoss(single(Y>0.5),T);
+        Acc = 1 - acc;
         % if Acc==0
         %     Acc
         % end
+        % Calculate gradients of loss with respect to learnable parameters.
+        gradients = dlgradient(loss,net.Learnables);
+    end
+
+    function [loss,gradients,Acc,acc_batch] = modelLossDM(net,X,T)
+        % % Forward data through network.
+        [Y] = forward(net,X);
+        % % Calculate cross-entropy loss.
+        loss = utils_net_train.generalizedDiceLoss(Y,T);
+        Y = Y(:,:,2:end,:);
+        T = T(:,:,2:end,:);
+        [acc, acc_batch] = utils_net_train.DiceLoss(single(Y>0.5),T);
+        Acc = 1 - acc;
+        acc_batch = 1 - acc_batch;
         % % Calculate gradients of loss with respect to learnable parameters.
         gradients = dlgradient(loss,net.Learnables);
     end
@@ -76,6 +92,46 @@ classdef utils_net_train
             medVolMask = medicalVolume([masksds(i).folder filesep masksds(i).name]);
             num_slices = bathSize/length(imgds);
             idx = randi([3,medVolData.NumTransverseSlices-2],num_slices,1);
+            for sl = 1 : num_slices
+                transl = [-2,0,2];
+                rect = utils_net_train.genRect(medVolData.VolumeGeometry.VolumeSize([1,2]),inputSize);
+                state = [rand(1,2),randn(1)];
+                for ii = 1:3
+                    slice = idx(sl) + transl(ii);
+                    img = extractSlice(medVolData,slice,"transverse");
+                    img = rot90(img,1);
+                    p = single(prctile(img(img>0),95,"all"));
+                    img = uint16((double(img)/p)*500);
+                    mask = extractSlice(medVolMask,slice,"transverse");
+                    mask = rot90(mask,1);
+                    [img, mask] = utils_net_train.augment_transf(img, mask, state);
+                    imgs(:,:,ii,k) = imcrop(img,rect);
+                    if ii==2
+                        masks(:,:,1,k) = imcrop(mask,rect);
+                    end
+                end
+                k = k+1;
+            end
+            % delete medVolData
+            % delete medVolMask
+        end
+
+    end
+
+    function [imgs, masks] = readSlicesDM(imgds, masksds, slices, inputSize)
+
+        imgs = zeros([inputSize(1:3),length(slices)]);
+        masks = zeros([inputSize(1:2),1,length(slices)]);
+        k = 1;
+        while ~isempty(slices)
+            medVolData = medicalVolume([imgds(slices(1,1)).folder filesep imgds(slices(1,1)).name]);
+            medVolMask = medicalVolume([masksds(slices(1,1)).folder filesep masksds(slices(1,1)).name]);
+            % num_slices = bathSize/length(imgds);
+            % idx = randi([3,medVolData.NumTransverseSlices-2],num_slices,1);
+            idx = slices(slices(:,1)==slices(1,1),2);
+            num_slices = length(idx);
+            slices(slices(:,1)==slices(1,1),:) = [];
+
             for sl = 1 : num_slices
                 transl = [-2,0,2];
                 rect = utils_net_train.genRect(medVolData.VolumeGeometry.VolumeSize([1,2]),inputSize);
@@ -175,5 +231,14 @@ classdef utils_net_train
         end
     
     end
+
+    function fcn = rand_norm_distrb(N, mu, std, n_range)
+        pd = makedist('Normal', 'mu', mu, 'sigma', std);
+        rmin = cdf(pd, n_range(1));
+        rmax = cdf(pd, n_range(2));
+        rUnif = (rmax - rmin) * rand(N, 1) + rmin;
+        fcn = icdf(pd, rUnif);
+    end
+
     end
 end
