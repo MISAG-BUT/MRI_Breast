@@ -5,28 +5,29 @@ clc
 
 
 % path = 'D:\pro_mr_prsa\Export\DICOM\S41610\Results';
-path = 'D:\pro_mr_prsa\Export\DICOM\S44540\Results_1';
+% path = 'D:\pro_mr_prsa\Export\DICOM\S44540\Results_1';
+path = ['D:\Breast_MR_I\Export\DICOM'];
 
-path_save = 'S:\registrace_MRI_prs\Exported_images_1';
+path_save = 'S:\MRI_Breast\Export\Exported_images_1';
 
-% i = 1;
-% col = dicomCollection(fullfile(path, ['orig_dyn_' num2str(i) ] ));
-% data = dicomreadVolume(col(1,14));
+D = dir([path filesep 'S*']);
+
+i = 1;
+
+% col = dicomCollection( fullfile( D(i).folder, D(i).name , 'Results','sub_orig_dyn' ) );
+
+[collection] = dicoms_info( fullfile( D(i).folder, D(i).name , 'Results','sub_orig_dyn') ,['I*'] ) ;
+
+col = collection(collection.Dyn==1,:); 
+
+% [dataO,InfoR]=dicomreadVolume(col.Filenames);
+
 % imshow5(data)
 
-%%
-k=1;
-img7=[];
-for i = 1:6
-    col = dicomCollection(fullfile(path, ['orig_dyn_' num2str(i) ] ));
-    data = dicomreadVolume(col(1,14));
-%     img7(:,:,k) = data(:,:,:,91);
-    img7(:,:,:,k) = squeeze(data);
-    k=k+1;
-end
 
 for i = 1:6
-    col = dicomCollection(fullfile(path, ['reg_dyn_' num2str(i) ] ));
+
+    col = collection(collection.Dyn==1,:); 
     data = dicomreadVolume(col(1,14));
 %     img7(:,:,k) = data(:,:,:,91);
     img7(:,:,:,k) = squeeze(data);

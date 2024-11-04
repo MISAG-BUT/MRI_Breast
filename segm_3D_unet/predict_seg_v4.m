@@ -9,7 +9,7 @@ clc
 
 % path_to_dicom = 'S:\MRI_Breast\data_train\NIfTI_Files_resaved_3\';
 % 
-% pat_dir = dir([path_to_dicom 'Breast*_mask.nii.gz']);
+% pat_dir = dir([path_to_dicom 'Breast*mask.nii.gz']);
 
 
 %% dataset FNUSA
@@ -20,7 +20,7 @@ clc
 % % dicomFiles = 'D:\Breast_MR\Export\DICOM\S41910\S6010';
 % % dicomFiles = 'D:\Breast_MR\Export\DICOM\S42640\S6010';
 
-for d = 1:2
+for d = 2
 
     if d==1
         path_to_dicom = 'D:\Breast_MR_I\Export\DICOM\';
@@ -33,12 +33,11 @@ pat_dir = dir([path_to_dicom 'S*']);
 
 %%
 
-for pat = 1:length(pat_dir)
+for pat = 16:length(pat_dir)
     
     %% loading for dicom FNUSA
 
     dicomFiles = dir([pat_dir(pat).folder filesep pat_dir(pat).name filesep 'S*']);
-
     [fPath, fName, fExt] = fileparts(dicomFiles(1).folder);
 
     % if exist(['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_II\predicted_4_0\' fName '_orig.nii.gz' ])
@@ -53,14 +52,18 @@ for pat = 1:length(pat_dir)
     % colNew = table('Size',[1,1],'VariableNames',{'Filenames'},'VariableTypes',{'string'});
     colNew = string(col{:,"Filenames"});
 
-    % [niftiData, InfoR] = dicomreadVolume(col.FileName);
-    % niftiData = squeeze(niftiData);
+    %% for nifti DUKE
+
+    % % [niftiData, InfoR] = dicomreadVolume(col.FileName);
+    % % niftiData = squeeze(niftiData);
+    % % 
+    % % [T,~,current_voxel_size] = TransMatrix(col.Info{1});
+    % % T = T';
+    % % % T([1,2],:)=T([2,1],:);
+    % % 
+    % % current_voxel_size = current_voxel_size';
     % 
-    % [T,~,current_voxel_size] = TransMatrix(col.Info{1});
-    % T = T';
-    % % T([1,2],:)=T([2,1],:);
-    % 
-    % current_voxel_size = current_voxel_size';
+    % colNew = [pat_dir(pat).folder  filesep  replace(pat_dir(pat).name,'_mask','')];
     
     %% data preprocessing
     
@@ -72,12 +75,12 @@ for pat = 1:length(pat_dir)
     p = single(prctile(data(data>0),95,"all"));
     data = uint16((double(data)/p)*500);
 
-    data = imrotate3(data,-90,[0,0,1]);
+    % data = imrotate3(data,-90,[0,0,1]);
     
     %% splitting and prediction
 
     % for verse = [0,1,2,3]
-    for verse = [8]
+    for verse = [2,3]
 
         % read model
         % net = load(['segm_3D_unet\trainedUNet_4_' num2str(verse) '.mat'],'net').net;
@@ -156,8 +159,11 @@ for pat = 1:length(pat_dir)
             elseif d==2
                 path_save = ['S:\MRI_Breast\Data_predicted\BestNet\MR_Breast_II\predicted_4_' num2str(verse) filesep ];
             end
+
+            % % DUKE
+            % path_save = ['S:\MRI_Breast\Data_predicted\BestNet_v4\DUKE\predicted_4_' num2str(verse) filesep ]; 
         
-        file_save = [pat_dir(pat).name];
+        file_save = replace([pat_dir(pat).name],'_mask.nii.gz','');
         mkdir(path_save)
         
         load('nii_info.mat')
@@ -167,7 +173,7 @@ for pat = 1:length(pat_dir)
         nii_info.Datatype = 'int16';
         nii_info.Description = 'resaved data';
         
-        % % nii_info = niftiinfo([path_save file_save '_orig']);
+        % nii_info = niftiinfo([path_save file_save '_orig']);
         
         if verse==0
             niftiwrite(int16(data),[path_save file_save '_orig'],nii_info,"Compressed",true)

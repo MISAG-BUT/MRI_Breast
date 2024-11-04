@@ -74,7 +74,7 @@ multiWaitbar(['Patient: 0 from ' num2str(length(D))], 'Increment', 1/length(D));
 
 %%
 
-for pat = 1:length(D)
+for pat = 1:10 %:length(D)
 
     multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
     multiWaitbar(['Patient: ' num2str(pat) ' from ' num2str(length(D))], 'Value', (pat-1)/length(D));
@@ -131,10 +131,9 @@ for pat = 1:length(D)
 
     [dataR,InfoR]=dicomreadVolume(col.Filenames);
     dataR = squeeze(dataR);
-    dataR = flip(dataR,3);
 
-    % medVol = medicalVolume(col.Filenames);
-    % dataR2 = medVol.Voxels;
+    medVol = medicalVolume(col.Filenames);
+    dataR2 = medVol.Voxels;
 
     T = multithresh( single(dataR(dataR>0)) ./ single(max(dataR(:))) , 3) .* single(max(dataR(:)));
     T = T-10; T(T<0)=0;
@@ -218,7 +217,6 @@ for dyn = 2:num_dyn
     
 %     dataR = squeeze(dataR);
     dataM = squeeze(dataM);
-    dataM = flip(dataM,3);
 
     T = multithresh( single(dataR(dataR>0)) ./ single(max(dataR(:))) , 3) .* single(max(dataR(:)));
     T = T-10; T(T<0)=0;
@@ -386,9 +384,9 @@ for dyn = 2:num_dyn
 
 end
 
-try
-   rmdir([path_save filesep '\TempFile\'],'s');
-end
+% try
+%    rmdir([path_save filesep '\TempFile\'],'s');
+% end
 
 end
 

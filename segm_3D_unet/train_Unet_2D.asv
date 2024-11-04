@@ -18,8 +18,8 @@ idx = randperm(numel(imgds) );
 imgds = imgds(idx);
 maskds = maskds(idx);
 
-imgds = imgds(1:10);
-maskds = maskds(1:10);
+% imgds = imgds(1:10);
+% maskds = maskds(1:10);
 
 splitnum = round(numel(imgds)*0.88);
 imgdsVal = imgds(splitnum:end);
@@ -66,14 +66,18 @@ maskds2 = maskds2(idx);
 %%
 splitnum = round(numel(imgds2)*0.88);
 
-imgdsVal = [imgdsVal; imgds2(splitnum:end)];
-maskdsVal = [maskdsVal; maskds2(splitnum:end)];
-% 
+% imgdsVal = [imgdsVal; imgds2(splitnum:end)];
+% maskdsVal = [maskdsVal; maskds2(splitnum:end)];
+
 % imgds = [imgds; imgds2(1:splitnum-1)];
 % maskds = [maskds; maskds2(1:splitnum-1)];
 
 imgds = [ imgds2(1:splitnum-1)];
 maskds = [ maskds2(1:splitnum-1)];
+
+imgdsVal = [imgds2(splitnum:end)];
+maskdsVal = [maskds2(splitnum:end)];
+
 
 % imgds = [imgds; imgds2];
 % maskds = [maskds; maskds2];
@@ -97,10 +101,10 @@ for i = 1:length(imgds)
 end
 IDX(1:end,4) = [1:size(IDX,1)];
 
-IDX(1:end,3) = 1;
-for i = [3,11,17,20,22,23,28]
-    IDX(IDX(:,1)==i,3) = 0;
-end
+% IDX(1:end,3) = 1;
+% for i = [3,11,17,20,22,23,28]
+%     IDX(IDX(:,1)==i,3) = 0;
+% end
 
 % IDX = load('trainedUNet_6_8.mat','IDX').IDX;
 
@@ -112,9 +116,9 @@ end
 
 % plot(net)
 
-name_version = 'trainedUNet_7_8';
+name_version = 'trainedUNet_7_1';
 
-description = ['dataMining batch KCL, ucene z 6.7, maskovani rezu s GT maskou breast, namisto ctvrteho kanalu, k implants data pridane i dalsi non-implants data (all FNUSA data), bin segm'];
+description = ['instancni segm, all FNUSA data + bez DUKE, uceno from 4_7 (zmena posledni vrstvy) dataMining batch KCL, cyclic LR'];
 % description = ['dalsi douceni, vic data bez implants, input (4 channels) i s maskou breast - maska GT, segmentace jen implantatu'];
 % description = ['from scratch instancni ucene jen na pac s implants = bez implants z train odstranena, instancni segm bez input masky prsu'];
 
@@ -124,7 +128,16 @@ inputSize = [256, 256, 3];
 % net = unet(inputSize, 2, EncoderDepth=3, NumFirstEncoderFilters=16);
 % net = unet(inputSize, 3, EncoderDepth=3, NumFirstEncoderFilters=16);
 
-net = load('trainedUNet_6_8.mat','net').net;
+net = load('trainedUNet_4_7.mat','net').net;
+
+lgraph = convolution2dLayer(3, 3, Padding="same", Name='encoderDecoderFinalConvLayer');
+net = removeLayers(net, 'encoderDecoderFinalConvLayer');
+net = addLayers(net, lgraph);
+net = connectLayers(net, 'Decoder-Stage-3-ReLU-2', 'encoderDecoderFinalConvLayer');
+net = connectLayers(net, 'encoderDecoderFinalConvLayer', 'FinalNetworkSoftmax-Layer');
+
+% net = initialize(net);
+
 
 %% Traininig parameters
 
@@ -133,13 +146,13 @@ net = load('trainedUNet_6_8.mat','net').net;
 % miniBatchSize = PatBatchSize * SlicesBatchSize;
 
 miniBatchSize = 32;
-sigma = 0.2;
+sigma = 0.1;
 
 numEpochs = 100;
 numSlicesVal = 32;
 
-initialLearnRate = 0.0001;
-num_cyclic = 2;
+initialLearnRate = 0.001;
+num_cyclic = 1;
 decreasing = 50;
 
 % decayLearnRate = 0.0005;
@@ -173,11 +186,12 @@ Val_iter = round(numIterationsPerEpoch * (1));
 
 monitor = trainingProgressMonitor(XLabel="Iteration");
 monitor.Info = ["LearningRate","Epoch","Iteration"];
-monitor.Metrics = ["TrainingLoss","ValidationLoss","TrainingDice","ValidationDice"];
+monitor.Metrics = ["TrainingLoss","ValidationLoss","TrainingDiceBreast","ValidationDiceBreast","TrainingDiceImplants","ValidationDiceImplants"];
 groupSubPlot(monitor,"Loss",["TrainingLoss","ValidationLoss"]);
-groupSubPlot(monitor,"Dice",["TrainingDice","ValidationDice"]);
+groupSubPlot(monitor,"DiceBreast",["TrainingDiceBreast","ValidationDiceBreast"]);
+groupSubPlot(monitor,"Diceimplants",["TrainingDiceImplants","ValidationDiceImplants"]);
 
-net = initialize(net);
+% net = initialize(net);
 
 iteration = 0;
 epoch = 0;
@@ -216,15 +230,15 @@ while epoch < numEpochs && ~monitor.Stop
 
 
         % onehotcoding
-        % Toh = T(:,:,1,:)==0;  % for both
-        % Toh(:,:,2,:) = T(:,:,1,:)==1;
-        % Toh(:,:,3,:) = T(:,:,1,:)==2;
+        Toh = T(:,:,1,:)==0;  % for both
+        Toh(:,:,2,:) = T(:,:,1,:)==1;
+        Toh(:,:,3,:) = T(:,:,1,:)==2;
 
-        Toh = T(:,:,1,:)<2;    % for implants only
-        Toh(:,:,2,:) = T(:,:,1,:)==2;
-        Toh = single(Toh);
+        % Toh = T(:,:,1,:)<2;    % for implants only
+        % Toh(:,:,2,:) = T(:,:,1,:)==2;
+        % Toh = single(Toh);
 
-        X(:,:,2,:) = X(:,:,2,:) .* single(T(:,:,1,:)>0);
+        % X(:,:,2,:) = X(:,:,2,:) .* single(T(:,:,1,:)>0);
 
         % Convert mini-batch of data to a dlarray.
         X = dlarray(single(X),"SSCB");
@@ -237,9 +251,9 @@ while epoch < numEpochs && ~monitor.Stop
 
         % Evaluate the model loss and gradients using dlfeval and the
         % modelLoss function.
-        [loss,gradients, GDice, Dice_batch] = dlfeval(@utils_net_train.modelLossDM,net,X,Toh);
+        [loss, gradients, ~, GDice] = dlfeval(@utils_net_train.modelLossDM,net,X,Toh);
 
-        IDX(idx_Rand,3) = squeeze(extractdata(Dice_batch));
+        IDX(idx_Rand,3) = min( squeeze(extractdata(GDice)), [] , 1 );
         [IDX] = sortrows(IDX,3,"ascend");
 
         pd = makedist('Normal', 'mu', mu1, 'sigma', sigma1);
@@ -248,7 +262,7 @@ while epoch < numEpochs && ~monitor.Stop
         x = linspace(0, size(IDX, 1), size(IDX, 1));
         y = pdf(pd, x);
         hold on;
-        plot(y / max(y)); % Normalize the y values
+        plot(y / max(y));
         ylim([0.0, 1.1]);
         hold off;
 
@@ -267,22 +281,23 @@ while epoch < numEpochs && ~monitor.Stop
                 [XVal, TVal] = utils_net_train.readSlicesVal(imgdsVal(idxVal), maskdsVal(idxVal), inputSize, numSlicesVal);
 
                 % onehotcoding
-                % TVoh = TVal(:,:,1,:)==0;    % for breast + implants
-                % TVoh(:,:,2,:) = TTVal(:,:,1,:)==1; 
-                % TVoh(:,:,3,:) = TTVal(:,:,1,:)==2;
+                TVoh = TVal(:,:,1,:)==0;    % for breast + implants
+                TVoh(:,:,2,:) = TVal(:,:,1,:)==1; 
+                TVoh(:,:,3,:) = TVal(:,:,1,:)==2;
 
-                TVoh = TVal(:,:,1,:)<2;    % for implants only
-                TVoh(:,:,2,:) = TVal(:,:,1,:)==2;   
-                TVoh = single(TVoh);
+                % TVoh = TVal(:,:,1,:)<2;    % for implants only
+                % TVoh(:,:,2,:) = TVal(:,:,1,:)==2;   
+                % TVoh = single(TVoh);
 
-                XVal(:,:,2,:) = XVal(:,:,2,:) .* single(TVal(:,:,1,:)>0);
+                % XVal(:,:,2,:) = XVal(:,:,2,:) .* single(TVal(:,:,1,:)>0);
 
                 XVal = dlarray(single(XVal),"SSCB");
                 TVoh = dlarray(single(TVoh),"SSCB");
                 if canUseGPU
                     XVal = gpuArray(XVal);
                 end
-                [vloss,~,vGDice] = dlfeval(@utils_net_train.modelLoss,net,XVal,TVoh);
+                [vloss,~,vGDice] = dlfeval(@utils_net_train.modelLossDM,net,XVal,TVoh);
+
                 valDice = valDice + (vGDice) /numel(imgdsVal);
                 valLoss = valLoss + (vloss) /numel(imgdsVal);
             end
@@ -310,4 +325,4 @@ while epoch < numEpochs && ~monitor.Stop
 end
 
 % Save the trained network
-save(['segm_3D_unet\' name_version '.mat'], 'net','netBest','monitor', 'description','imgdsVal', 'imgds');
+save(['segm_3D_unet\' name_version '.mat'], 'net','netBest','monitor', 'description','imgdsVal', 'imgds', 'IDX');

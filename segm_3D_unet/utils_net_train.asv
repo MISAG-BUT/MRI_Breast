@@ -47,17 +47,19 @@ classdef utils_net_train
         gradients = dlgradient(loss,net.Learnables);
     end
 
-    function [loss, gradients, acc, acc_batch] = modelLossDM(net,X,T)
+    function [loss,gradients,Acc,acc_batch] = modelLossDM(net,X,T)
         % % Forward data through network.
         [Y] = forward(net,X);
         % % Calculate cross-entropy loss.
         loss = utils_net_train.generalizedDiceLoss(Y,T);
         Y = Y(:,:,2:end,:);
         T = T(:,:,2:end,:);
-        [acc, acc_batch] = utils_net_train.DiceLoss(single(Y>0.5),T);
-        % Acc = 1 - acc;
-        acc_batch = 1 - acc_batch;
+        [acc, acc_batch_Breast] = utils_net_train.DiceLoss(single(Y>0.5),T);
+        [acc, acc_batch_Implants] = utils_net_train.DiceLoss(single(Y>0.5),T);
 
+        % Acc = 1 - acc;
+
+        acc_batch = 1 - acc_batch;
         % % Calculate gradients of loss with respect to learnable parameters.
         gradients = dlgradient(loss,net.Learnables);
     end

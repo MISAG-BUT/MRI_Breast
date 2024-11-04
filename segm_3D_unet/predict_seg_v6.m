@@ -135,7 +135,6 @@ for pat = 17:length(pat_dir)
         %%
         
         maskThr = mask>0.5;
-        
         maskFinal = refinement_mask(maskThr);
 
         % maskThr = imrotate3(maskThr,90,[0,0,1]);
