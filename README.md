@@ -11,16 +11,23 @@ General information about this tool:
 * breast segmentation in native scan
 * It runs under Matlab licence (2024a) or matlab RunTime
 
-## Requirements
+
+## Running the Program - one of three possibilities
+* install CoRegBreastMRI_web.exe to your PC as program 
+    * no else requirements are needed
+
+* run CoRegBreastMRI.exe file
+    * download fodler with codes
+    * elastix folder must be in current folder with program
+    * trained model for segmentation in current folder with program
+
+* use source code - script CoRegBreastMRI.m
+    * you need same thing as previous
+
+## Important links
 * instalation Matlab 2024a or RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
 * Elastix ( [dowload here](https://elastix.dev/download.php) )
 * trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link) )
-
-## Prerequisities and Running the Program 
-* elastix folder in current folder with program
-* trained model for segmentation
-* modify and use script CoRegBreastMRI.m
-* or run CoRegBreastMRI.exe file
 
 ## Data preprocessing
 All data needs to be **dicom** files and needs to be in an single folder (all dynamics)
