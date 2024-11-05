@@ -6,24 +6,25 @@ Data preparation for preprocessing is a prerequisite for subsequent analysis, as
 
 ## Description
 General information about this tool:
-* It runs under Matlab licence or matlab RunTime
-* 
+* folder contating dicom files are divide to dynamics (as export from ISP)
+* all dynamics are registered to native scan
+* breast segmentation in native scan
+* It runs under Matlab licence (2024a) or matlab RunTime
 
 ## Requirements
-* instalation
+* instalation Matlab 2024a or RunTime
 * Elastix
-
-
-The necessary requirements can also be installed with 
+* trained model
 
 ## Prerequisities and Running the Program 
+* elastix folder in current folder with program
+* trained model for segmentation
 
-
+* modify and use script CoRegBreastMRI.m
+* or run CoRegBreastMRI.exe file
 
 ## Data preprocessing
-
 All data needs to be **dicom** files and needs to be in an single folder (all dynamics)
-
 
 ## Licence
 The tool is possible to use for academic and reseach purposes. 
