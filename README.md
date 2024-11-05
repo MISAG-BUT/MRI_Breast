@@ -19,7 +19,6 @@ General information about this tool:
 ## Prerequisities and Running the Program 
 * elastix folder in current folder with program
 * trained model for segmentation
-
 * modify and use script CoRegBreastMRI.m
 * or run CoRegBreastMRI.exe file
 
