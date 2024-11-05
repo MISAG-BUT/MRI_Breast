@@ -6,23 +6,21 @@ Data preparation for preprocessing is a prerequisite for subsequent analysis, as
 
 ## Description
 General information about this tool:
-* folder contating dicom files are divide to dynamics (as export from ISP)
-* all dynamics are registered to native scan
-* breast segmentation in native scan
-* It runs under Matlab licence (2024a) or matlab RunTime
+* folders containing dicom files are split into dynamics (like ISP exports)
+* all dynamics are registered to the native scan
+* breast segmentation in the native scan
+* runs under Matlab license (2024a) or matlab RunTime.
 
 
 ## Running the Program - one of three possibilities
 * install CoRegBreastMRI_web.exe to your PC as program 
-    * no else requirements are needed
-
-* run CoRegBreastMRI.exe file
-    * download fodler with codes
-    * elastix folder must be in current folder with program
-    * trained model for segmentation in current folder with program
-
-* use source code - script CoRegBreastMRI.m
-    * you need same thing as previous
+    * no additional requirements needed
+* run the file CoRegBreastMRI.exe
+    * download the fodler with the codes
+    * the elastix folder must be in the current program folder
+    * trained model for segmentation in the current program folder
+* use of source code - script CoRegBreastMRI.m
+    * you need the same as in the previous example
 
 ## Important links
 * instalation Matlab 2024a or RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
@@ -34,4 +32,4 @@ All data needs to be **dicom** files and needs to be in an single folder (all dy
 
 ## Licence
 The tool is possible to use for academic and reseach purposes. 
-The pipeline has been submited to BVM 2025 Germany.
+The proposed approach was submitted to the BVM 2025 Germany conference.
