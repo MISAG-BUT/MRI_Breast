@@ -5,12 +5,12 @@ Automatic tool for co-registration of MR dynamic contrast enhanced MR data and b
 Data preparation for preprocessing is a prerequisite for subsequent analysis, as it enables comparative studies and helps to identify clinically significant relationships between the attributes of the extracted MR-based images and clinical outcomes or parameters.
 
 ## Description
-General information about this tool:
-* folders containing dicom files are split into dynamics (like ISP exports)
+General information about the tool steps:
+* folders containing dicom files (mroe patients) are split into dynamics
 * all dynamics are registered to the native scan
-* breast segmentation in the native scan
-* runs under Matlab license (2024a) or matlab RunTime.
+* breast segmentation of the native scans
 
+Program runs under Matlab license (2024a) or matlab RunTime
 
 ## Running the Program - one of three possibilities
 * install CoRegBreastMRI_web.exe to your PC as program 
@@ -29,7 +29,7 @@ General information about this tool:
 * trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link) )
 
 ## Data preprocessing
-All data needs to be **dicom** files and needs to be in an single folder (all dynamics)
+All data needs to be **dicom** files and needs to be in an single folder (all dynamics, data export by ISP)
 
 ## Licence
 The tool is possible to use for academic and reseach purposes. 
