@@ -13,7 +13,7 @@ General information about the tool steps:
 Program runs under Matlab license (2024a) or matlab RunTime
 
 ## Running the Program - one of three possibilities
-* install CoRegBreastMRI_web.exe to your PC as program 
+* install CoRegBreastMRI_web.exe to your PC as program
     * internet connection
     * no additional requirements needed
 * run the file CoRegBreastMRI.exe
