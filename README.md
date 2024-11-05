@@ -25,8 +25,8 @@ Program runs under Matlab license (2024a) or matlab RunTime
 
 ## Important links
 * instalation Matlab 2024a or Matlab RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
-* Elastix ( [dowload here](https://elastix.dev/download.php) )
-* trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link) )
+* download Elastix ( [dowload here](https://elastix.dev/download.php) )
+* download trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link) )
 
 ## Data preprocessing
 All data needs to be **dicom** files and needs to be in an single folder (all dynamics, data export by ISP)
