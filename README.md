@@ -24,7 +24,7 @@ Program runs under Matlab license (2024a) or matlab RunTime
     * you need the same as in the previous example
 
 ## Important links
-* instalation Matlab 2024a or RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
+* instalation Matlab 2024a or Matlab RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
 * Elastix ( [dowload here](https://elastix.dev/download.php) )
 * trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link) )
 
