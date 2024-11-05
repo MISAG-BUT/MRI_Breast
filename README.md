@@ -12,8 +12,8 @@ General information about this tool:
 * It runs under Matlab licence (2024a) or matlab RunTime
 
 ## Requirements
-* instalation Matlab 2024a or RunTime
-* Elastix
+* instalation Matlab 2024a or RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
+* Elastix ( [dowload here](https://elastix.dev/download.php) )
 * trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link) )
 
 ## Prerequisities and Running the Program 
