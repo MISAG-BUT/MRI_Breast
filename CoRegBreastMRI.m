@@ -65,7 +65,7 @@ else
 end
 
 multiWaitbar('Segmentation model loading...', 'Value', 0.3);
-net = load('trainedUNet_4_8.mat','netBest').netBest;
+net = load('trainedUNet_4_7.mat','netBest').netBest;
 multiWaitbar( 'CloseAll' );
 
 % h = waitbar(0,['Patient 1 from ' num2str(length(D))]);
