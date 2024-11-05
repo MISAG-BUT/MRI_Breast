@@ -33,4 +33,4 @@ All data needs to be **dicom** files and needs to be in an single folder (all dy
 
 ## Licence
 The tool is possible to use for academic and reseach purposes. 
-The proposed approach was submitted to the BVM 2025 Germany conference.
+The proposed approach was submitted to the BVM 2025 Germany conference. Please cite our conference paper after its publication.
