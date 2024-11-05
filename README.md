@@ -14,7 +14,7 @@ General information about this tool:
 ## Requirements
 * instalation Matlab 2024a or RunTime
 * Elastix
-* trained model
+* trained model ( url[https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link](here) )
 
 ## Prerequisities and Running the Program 
 * elastix folder in current folder with program
