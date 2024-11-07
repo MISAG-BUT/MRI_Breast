@@ -203,8 +203,8 @@ for dyn = 2:num_dyn
     multiWaitbar('Read data','Relabel','Registration');
     multiWaitbar('Registration','Value',2/5);
 
-    % PF_name = [ctfroot '\CoRegBreastM' '\parametric_file\BSpline_custom.txt' ];
-    PF_name = ['parametric_file\BSpline_custom.txt' ];
+    % PF_name = [ctfroot '\CoRegBreastM\BSpline_custom.txt' ];
+    PF_name = ['BSpline_custom.txt' ];
 
 %     disp(ctfroot)
 %     disp(matlabroot)
