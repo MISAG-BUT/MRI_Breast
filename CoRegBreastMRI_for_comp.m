@@ -3,8 +3,8 @@ clear all
 close all
 clc
 
-% addpath(fullfile(ctfroot, 'utils\'))
-addpath(fullfile(pwd, 'utils\'))
+addpath(fullfile(ctfroot, 'utils\'))
+% addpath(fullfile(pwd, 'utils\'))
 
 % path to dicoms file
 [path_data] = uigetdir();
@@ -223,8 +223,8 @@ for dyn = 2:num_dyn
     multiWaitbar('Read data','Relabel','Registration');
     multiWaitbar('Registration','Value',2/5);
 
-    % PF_name = [ctfroot '\CoRegBreastM\BSpline_custom.txt' ];
-    PF_name = ['utils\BSpline_custom.txt' ];
+    PF_name = [ctfroot '\CoRegBreastM\utils\BSpline_custom.txt' ];
+    % PF_name = ['utils\BSpline_custom.txt' ];
 
 %     disp(ctfroot)
 %     disp(matlabroot)
@@ -237,8 +237,8 @@ for dyn = 2:num_dyn
     mat2raw_3D(maskB,tempFile,'maskB',[InfoM.PixelSpacings(1,:), InfoM.PatientPositions(2,3)-InfoM.PatientPositions(1,3)] )
     
     
-    % CMD = [ ctfroot '\CoRegBreastM' '\elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
-    CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
+    CMD = [ ctfroot '\CoRegBreastM' '\elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
+    % CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
 
     system(CMD)
     
