@@ -8,6 +8,7 @@ Export/*
 elastix/*
 TempFile/*
 *.mat
+*.asv
 *.nii.gz
 *.zip
 *.nrrd
