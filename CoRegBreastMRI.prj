@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="87158697" file="S:\registrace_MRI_prs\CoRegBreastMRI.prj" location="S:\registrace_MRI_prs" name="CoRegBreastMRI" preferred-package-location="S:\registrace_MRI_prs\CoRegBreastMRI\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="87158697" file="D:\Projekty\MRI_prsa\MRI_Breast\CoRegBreastMRI.prj" location="D:\Projekty\MRI_prsa\MRI_Breast" name="CoRegBreastMRI" preferred-package-location="S:\registrace_MRI_prs\CoRegBreastMRI\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>CoRegBreastMRI</param.appname>
     <param.icon>${PROJECT_ROOT}\CoRegBreastMRI_resources\icon.ico</param.icon>
     <param.icons>
@@ -14,7 +14,7 @@
     <param.company />
     <param.summary />
     <param.description />
-    <param.screenshot>${PROJECT_ROOT}\CoRegBreastMRI_resources\CORegBreastMRI.png</param.screenshot>
+    <param.screenshot />
     <param.guid />
     <param.installpath.string>\CoRegBreastMRI\</param.installpath.string>
     <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
@@ -53,6 +53,7 @@
       <param.company />
       <param.summary />
       <param.description />
+      <param.screenshot />
       <param.guid />
       <param.installpath.string />
       <param.installpath.combo />
@@ -78,27 +79,24 @@
       <param.example />
     </unset>
     <fileset.main>
-      <file>${PROJECT_ROOT}\CoRegBreastMRI.m</file>
+      <file>${PROJECT_ROOT}\CoRegBreastMRI_for_comp.m</file>
     </fileset.main>
     <fileset.resources>
       <file>${PROJECT_ROOT}\elastix</file>
-      <file>${PROJECT_ROOT}\parametric_file</file>
+      <file>${PROJECT_ROOT}\utils</file>
     </fileset.resources>
     <fileset.package />
     <fileset.depfun>
-      <file>${PROJECT_ROOT}\dicoms_info.m</file>
-      <file>${PROJECT_ROOT}\load_raw_reg.m</file>
-      <file>${PROJECT_ROOT}\mat2raw_3D.m</file>
-      <file>${PROJECT_ROOT}\multiWaitbar.m</file>
+      <file>${PROJECT_ROOT}\trainedUNet_4_7.mat</file>
     </fileset.depfun>
     <build-deliverables>
-      <file location="${PROJECT_ROOT}\CoRegBreastMRI\for_testing" name="splash.png" optional="false">S:\registrace_MRI_prs\CoRegBreastMRI\for_testing\splash.png</file>
-      <file location="${PROJECT_ROOT}\CoRegBreastMRI\for_testing" name="readme.txt" optional="true">S:\registrace_MRI_prs\CoRegBreastMRI\for_testing\readme.txt</file>
-      <file location="${PROJECT_ROOT}\CoRegBreastMRI\for_testing" name="CoRegBreastMRI.exe" optional="false">S:\registrace_MRI_prs\CoRegBreastMRI\for_testing\CoRegBreastMRI.exe</file>
+      <file location="${PROJECT_ROOT}\CoRegBreastMRI\for_testing" name="splash.png" optional="false">D:\Projekty\MRI_prsa\MRI_Breast\CoRegBreastMRI\for_testing\splash.png</file>
+      <file location="${PROJECT_ROOT}\CoRegBreastMRI\for_testing" name="readme.txt" optional="true">D:\Projekty\MRI_prsa\MRI_Breast\CoRegBreastMRI\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\CoRegBreastMRI\for_testing" name="CoRegBreastMRI.exe" optional="false">D:\Projekty\MRI_prsa\MRI_Breast\CoRegBreastMRI\for_testing\CoRegBreastMRI.exe</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files\MATLAB\R2021b</root>
+      <root>C:\Program Files\MATLAB\R2024a</root>
       <toolboxes>
         <toolbox name="matlabcoder" />
         <toolbox name="embeddedcoder" />
