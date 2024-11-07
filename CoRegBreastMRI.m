@@ -169,6 +169,7 @@ saveas(hFig,replace(filenameTxt,'Breast_sizes.txt', 'Breast_segmentation.png'))
 close(hFig)
 
 niftiwrite(mask, replace(filenameTxt,'Breast_sizes.txt','Breast_mask.nii.gz'))
+niftiwrite(dataR, replace(filenameTxt,'Breast_sizes.txt','Breast_native.nii.gz'))
 
 multiWaitbar('Breast segmentation','Close');
 
