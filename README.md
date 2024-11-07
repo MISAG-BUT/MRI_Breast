@@ -13,10 +13,10 @@ General information about the tool steps:
 Program runs under Matlab license (2024a) or matlab RunTime
 
 ## Running the Program - one of three possibilities
-* install CoRegBreastMRI_web.exe to your PC as program
+* install CoRegBreastMRI_web.exe to your PC as program ([downlowd here](https://drive.google.com/file/d/1VTeUz03rKcSrFSIqoShfwz_YyZyndWvC/view?usp=drive_link))
     * internet connection
     * no additional requirements needed
-* run the file CoRegBreastMRI.exe
+* run the file CoRegBreastMRI.exe ([downlowd here](https://drive.google.com/file/d/19VC9Ox0DaF5G8StGs3f0CM5_zSkqfcb2/view?usp=drive_link))
     * download the fodler with the codes
     * the elastix folder must be in the current program folder
     * trained model for segmentation in the current program folder
@@ -55,9 +55,9 @@ Each patient folder will contain a new folder "Results" containg:
 * reg_dyn - folder with registered dznamics in dicoms file
 * sub_orig_dyn - dicom files of subtractions - subtraction of native from dynamics
 * sub_reg_dyn - subtraction of native from registered dynamics
+* mask - folder of binary mask of breast (segmentation)
 * Breast_segmentation.png - figure of breast segmetnation in 2D slices
 * Breast_size.txt - text file containing volumes of breast (in milliliters)
-* Breast_mask.nii.gz - nifti file of binary mask of breast (segmentation)
 
 ## Licence
 The tool is possible to use for academic and reseach purposes. 
