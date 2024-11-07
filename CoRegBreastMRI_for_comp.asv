@@ -3,15 +3,17 @@ clear all
 close all
 clc
 
-% addpath(fullfile(ctfroot, 'utils\'))
-addpath(fullfile(pwd, 'utils\'))
-
 % path to dicoms file
+% path_data = 'D:\Breast_MR_I\Export';
+% D = dir([path_data '*\**\S*']);
+
 [path_data] = uigetdir();
 
 if path_data==0
     return
 end
+
+% h = waitbar(0,'Folder selection...');
 
 % Conditions for exist results ######################
 R = dir([path_data '\**\Results']);
@@ -65,7 +67,6 @@ for pat = 1:length(D)
     multiWaitbar(['Patient: ' num2str(pat-1) ' from ' num2str(length(D))], 'Relabel', ['Patient: ' num2str(pat) ' from ' num2str(length(D))]);
     multiWaitbar(['Patient: ' num2str(pat) ' from ' num2str(length(D))], 'Value', (pat-1)/length(D));
     
-    % selection of subfolder with dynamics
     path_1 = fullfile(D(pat).folder, D(pat).name);
     DD = dir([path_1,'\S*']);
     
@@ -164,11 +165,8 @@ pause(0.5)
 
 filenameTxt = [ path_save filesep 'Breast_sizes.txt'];
 appendNumbersToTxt(volumes(1), volumes(2), filenameTxt, 'Dyn_0 -')
-% saveas(hFig,replace(filenameTxt,'Breast_sizes.txt', 'Breast_segmentation.png'))
 saveas(hFig,replace(filenameTxt,'Breast_sizes.txt', 'Breast_segmentation.png'))
 close(hFig)
-
-niftiwrite(mask, replace(filenameTxt,'Breast_sizes.txt','Breast_mask.nii.gz'))
 
 multiWaitbar('Breast segmentation','Close');
 
@@ -221,6 +219,7 @@ for dyn = 2:num_dyn
     % CMD = [ ctfroot '\CoRegBreastM' '\elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
     CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ' -fMask ' [tempFile 'maskA.mhd'] ' -mMask ' [tempFile 'maskB.mhd']];
 
+    %     CMD = ['elastix\elastix.exe -f ' [tempFile 'imgA.mhd']  ' -m ' [tempFile 'imgB.mhd'] ' -out ' [tempFile ] ' -p ' [PF_name] ];
     system(CMD)
     
     

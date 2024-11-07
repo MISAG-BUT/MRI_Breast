@@ -23,13 +23,41 @@ Program runs under Matlab license (2024a) or matlab RunTime
 * use of source code - script CoRegBreastMRI.m
     * you need the same as in the previous example
 
-## Important links
+## Important other links
 * instalation Matlab 2024a or Matlab RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
 * download Elastix ( [dowload here](https://elastix.dev/download.php) )
 * download trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link) )
 
-## Data preprocessing
-All data needs to be **dicom** files and needs to be in an single folder (all dynamics, data export by ISP)
+## Data directory structure
+All data needs to be **dicom** files and one patient (case) needs to be in an single folder (all dynamics) = Data exported by ISP.
+Example of structure direcetories patient data:
+```
+... PATH_DATA\
+
++---S44670 
+|   +---S4010
+|   |       DIRFILE
+|   |       I10
+|   |       I100
+|   |       I100
+|   |       ...
++---S44660
+|   +---S4040
+|   |       DIRFILE
+|   |       I10
+|   |       I100
+|   |       ...
+...
+```
+## Outputs
+Each patient folder will contain a new folder "Results" containg:
+* orig_dyn - 
+* reg_dyn - 
+* sub_orig_dyn - 
+* sub_reg_dyn -
+* Breast_segmentation.png - 
+* Breast_size.txt - 
+* Breast_mask.nii.gz - nifti file of binary mask of breast (segmentation)
 
 ## Licence
 The tool is possible to use for academic and reseach purposes. 
