@@ -51,12 +51,12 @@ Example of structure direcetories patient data:
 ```
 ## Outputs
 Each patient folder will contain a new folder "Results" containg:
-* orig_dyn - 
-* reg_dyn - 
-* sub_orig_dyn - 
-* sub_reg_dyn -
-* Breast_segmentation.png - 
-* Breast_size.txt - 
+* orig_dyn - folder with original dicoms of dynamics
+* reg_dyn - folder with registered dznamics in dicoms file
+* sub_orig_dyn - dicom files of subtractions - subtraction of native from dynamics
+* sub_reg_dyn - subtraction of native from registered dynamics
+* Breast_segmentation.png - figure of breast segmetnation in 2D slices
+* Breast_size.txt - text file containing volumes of breast (in milliliters)
 * Breast_mask.nii.gz - nifti file of binary mask of breast (segmentation)
 
 ## Licence

@@ -76,6 +76,7 @@ for pat = 1:length(D)
     for ii = 1:length(DD)
         path_2 = fullfile(DD(ii).folder, DD(ii).name);
         dcmDD = dir([path_2 '\I*']);
+        % dcmDD(1:2) = [];
         lenDD(ii) = length(dcmDD);
         descriptions{ii} = dicominfo(fullfile(dcmDD(1).folder, dcmDD(1).name)).SeriesDescription;
     end
@@ -127,10 +128,14 @@ for pat = 1:length(D)
     path_save_2 = [path_save filesep 'reg_dyn'];
     mkdir(path_save_2)
 
+    path_save_2 = [path_save filesep 'mask'];
+    mkdir(path_save_2)
+
     UID_orig = dicomuid;
     UID_reg = dicomuid;
     UID_sub_reg = dicomuid;
     UID_sub_orig = dicomuid;
+    UID_mask = dicomuid;
 
     for i = 1:size(dataR,3)
         [~,name] = fileparts(col.Filenames(i));
@@ -168,8 +173,21 @@ appendNumbersToTxt(volumes(1), volumes(2), filenameTxt, 'Dyn_0 -')
 saveas(hFig,replace(filenameTxt,'Breast_sizes.txt', 'Breast_segmentation.png'))
 close(hFig)
 
-niftiwrite(mask, replace(filenameTxt,'Breast_sizes.txt','Breast_mask.nii.gz'))
-niftiwrite(dataR, replace(filenameTxt,'Breast_sizes.txt','Breast_native.nii.gz'))
+multiWaitbar('Resaving segmented data', 'Value', 0);
+for i = 1:size(mask,3)
+    [~,name] = fileparts(col.Filenames(i));
+    metadata = col.Info{i};
+    metadata.SeriesDescription = [ 'NOT DIAG - ' 'Mask ' metadata.SeriesDescription ];
+    metadata.SeriesInstanceUID =  UID_mask;
+    metadata.WindowWidth = 600;
+    metadata.WindowCenter = 300;
+    dicomwrite( uint16(mask(:,:,i)), [path_save filesep 'Mask' filesep char(name)] , metadata);
+    multiWaitbar('Resaving segmented data', 'Value', i/size(dataR,3));
+end
+multiWaitbar('Resaving segmented data', 'Close');
+
+% niftiwrite(mask, replace(filenameTxt,'Breast_sizes.txt','Breast_mask.nii.gz'))
+% niftiwrite(dataR, replace(filenameTxt,'Breast_sizes.txt','Breast_native.nii.gz'))
 
 multiWaitbar('Breast segmentation','Close');
 
@@ -206,7 +224,7 @@ for dyn = 2:num_dyn
     multiWaitbar('Registration','Value',2/5);
 
     % PF_name = [ctfroot '\CoRegBreastM\BSpline_custom.txt' ];
-    PF_name = ['BSpline_custom.txt' ];
+    PF_name = ['utils\BSpline_custom.txt' ];
 
 %     disp(ctfroot)
 %     disp(matlabroot)
