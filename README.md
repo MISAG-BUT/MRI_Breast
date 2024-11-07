@@ -17,11 +17,12 @@ Program runs under Matlab license (2024a) or matlab RunTime
     * internet connection
     * no additional requirements needed
 * run the file CoRegBreastMRI.exe ([downlowd here](https://drive.google.com/file/d/19VC9Ox0DaF5G8StGs3f0CM5_zSkqfcb2/view?usp=drive_link))
-    * download the fodler with the codes
-    * the elastix folder must be in the current program folder
-    * trained model for segmentation in the current program folder
+    * download and install RunTime Matlab 2024a
+    * no additional requirements needed
 * use of source code - script CoRegBreastMRI.m
     * you need the same as in the previous example
+    * the elastix folder must be in the current program folder
+    * the trained model must be in the current program folder
 
 ## Important other links
 * instalation Matlab 2024a or Matlab RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
