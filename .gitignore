@@ -16,3 +16,5 @@ DeepSeA-master
 segm_3D_unet/dicm2nii
 Results/*
 segm_3D_unet/+trainedSynthSegModel/*
+imshow5.m
+imfuse5.m
