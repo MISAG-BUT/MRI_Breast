@@ -13,10 +13,10 @@ General information about the tool steps:
 Program runs under Matlab license (2024a) or matlab RunTime
 
 ## Running the Program - one of three possibilities
-* install CoRegBreastMRI_web.exe to your PC as program ([downlowd here](https://drive.google.com/file/d/1VTeUz03rKcSrFSIqoShfwz_YyZyndWvC/view?usp=drive_link))
+* install CoRegBreastMRI_web.exe to your PC as program ([downlowd here](https://drive.google.com/file/d/1VTeUz03rKcSrFSIqoShfwz_YyZyndWvC/view?usp=sharing))
     * internet connection
     * no additional requirements needed
-* run the file CoRegBreastMRI.exe ([downlowd here](https://drive.google.com/file/d/19VC9Ox0DaF5G8StGs3f0CM5_zSkqfcb2/view?usp=drive_link))
+* run the file CoRegBreastMRI.exe ([downlowd here](https://drive.google.com/file/d/19VC9Ox0DaF5G8StGs3f0CM5_zSkqfcb2/view?usp=sharing))
     * download and install RunTime Matlab 2024a
     * no additional requirements needed
 * use of source code - script CoRegBreastMRI.m
@@ -27,7 +27,7 @@ Program runs under Matlab license (2024a) or matlab RunTime
 ## Important other links
 * instalation Matlab 2024a or Matlab RunTime ( [downlowd here](https://www.mathworks.com/products/compiler/matlab-runtime.html))
 * download Elastix ( [dowload here](https://elastix.dev/download.php) )
-* download trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=drive_link) )
+* download trained model ( [download here](https://drive.google.com/file/d/1cU1XA0Zj4nbSxnJg43WyU3u7xs6G05Eq/view?usp=sharing) )
 
 ## Data directory structure
 All data needs to be **dicom** files and one patient (case) needs to be in an single folder (all dynamics) = Data exported by ISP.
