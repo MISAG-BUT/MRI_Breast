@@ -31,7 +31,7 @@ Program runs under Matlab license (2024a) or matlab RunTime
 
 ## Data directory structure
 All data needs to be **dicom** files and one patient (case) needs to be in an single folder (all dynamics) = Data exported by ISP.
-Example of structure direcetories patient data:
+Example of structure directories patient data:
 ```
 ... PATH_DATA\
 
