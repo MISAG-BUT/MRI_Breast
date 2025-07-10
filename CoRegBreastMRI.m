@@ -4,7 +4,10 @@ close all
 clc
 
 % addpath(fullfile(ctfroot, 'utils\'))
+
 addpath(fullfile(pwd, 'utils\'))
+addpath(fullfile(pwd, 'segm_3D_unet\'))
+addpath(fullfile(pwd, 'elastix\'))
 
 % path to dicoms file
 [path_data] = uigetdir();
@@ -112,7 +115,7 @@ for pat = 1:length(D)
 
     multiWaitbar('Resaving dynamic data', 'Value', 0);
 
-    col = collection(collection.Dyn==1,:); 
+    col = collection(collection.Dyn==1,:);
 
     [dataR,InfoR]=dicomreadVolume(col.Filenames);
     dataR = squeeze(dataR);
@@ -163,6 +166,9 @@ for pat = 1:length(D)
 multiWaitbar('Breast segmentation','Value',0.3);
 
 [mask, volumes, hFig] = segmentation_breast_2(dataR, col.Info{1,1}, net);
+
+SE = create_sphere(3);
+maskA = imdilate(mask, SE);
 
 multiWaitbar('Breast segmentation','Value', 0.9);
 pause(0.5)
@@ -224,7 +230,7 @@ for dyn = 2:num_dyn
     multiWaitbar('Registration','Value',2/5);
 
     % PF_name = [ctfroot '\CoRegBreastM\BSpline_custom.txt' ];
-    PF_name = ['utils\BSpline_custom.txt' ];
+    PF_name = ['parametric_file\BSpline_custom.txt' ];
 
 %     disp(ctfroot)
 %     disp(matlabroot)

@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="87158697" file="D:\Projekty\MRI_prsa\MRI_Breast\CoRegBreastMRI.prj" location="D:\Projekty\MRI_prsa\MRI_Breast" name="CoRegBreastMRI" preferred-package-location="S:\registrace_MRI_prs\CoRegBreastMRI\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="2604779794" file="D:\Projekty\MRI_prsa\MRI_Breast\CoRegBreastMRI.prj" location="D:\Projekty\MRI_prsa\MRI_Breast" name="CoRegBreastMRI" preferred-package-location="D:\Projekty\MRI_prsa\MRI_Breast\CoRegBreastMRI\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>CoRegBreastMRI</param.appname>
     <param.icon>${PROJECT_ROOT}\CoRegBreastMRI_resources\icon.ico</param.icon>
     <param.icons>
@@ -8,7 +8,7 @@
       <file>${PROJECT_ROOT}\CoRegBreastMRI_resources\icon_24.png</file>
       <file>${PROJECT_ROOT}\CoRegBreastMRI_resources\icon_16.png</file>
     </param.icons>
-    <param.version>1.0</param.version>
+    <param.version>1.1</param.version>
     <param.authnamewatermark>Jakubice R. &amp; Chmelik J.</param.authnamewatermark>
     <param.email />
     <param.company />
@@ -48,7 +48,6 @@
 	 -?  print help on how to use the application 
 	 input arguments</param.help.text>
     <unset>
-      <param.version />
       <param.email />
       <param.company />
       <param.summary />
@@ -87,6 +86,17 @@
     </fileset.resources>
     <fileset.package />
     <fileset.depfun>
+      <file>${PROJECT_ROOT}\appendNumbersToTxt.m</file>
+      <file>${PROJECT_ROOT}\create_sphere.m</file>
+      <file>${PROJECT_ROOT}\dicoms_info.m</file>
+      <file>${PROJECT_ROOT}\getTransMatrix.m</file>
+      <file>${PROJECT_ROOT}\imshow5.m</file>
+      <file>${PROJECT_ROOT}\load_raw_reg.m</file>
+      <file>${PROJECT_ROOT}\mat2raw_3D.m</file>
+      <file>${PROJECT_ROOT}\multiWaitbar.m</file>
+      <file>${PROJECT_ROOT}\refinement_mask.m</file>
+      <file>${PROJECT_ROOT}\segm_3D_unet\utils_net_train.m</file>
+      <file>${PROJECT_ROOT}\segmentation_breast_2.m</file>
       <file>${PROJECT_ROOT}\trainedUNet_4_7.mat</file>
     </fileset.depfun>
     <build-deliverables>
