@@ -112,7 +112,7 @@ for pat = 1:length(D)
 
     multiWaitbar('Resaving dynamic data', 'Value', 0);
 
-    col = collection(collection.Dyn==1,:); 
+    col = collection(collection.Dyn==1,:);
 
     [dataR,InfoR]=dicomreadVolume(col.Filenames);
     dataR = squeeze(dataR);
