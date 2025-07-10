@@ -62,4 +62,5 @@ Each patient folder will contain a new folder "Results" containg:
 
 ## Licence
 The tool is possible to use for academic and reseach purposes. 
-The proposed approach was submitted to the BVM 2025 Germany conference. Please cite our conference paper after its publication.
+The proposed approach was submitted to the CMBEBIH 2025 conference, Sarajevo Bosnia and Herzegovina. Please cite our conference paper after its publication.
+CoRegBreastMRI - Jakubice R. & Chmelik J.
