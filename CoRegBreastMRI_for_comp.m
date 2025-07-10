@@ -164,6 +164,9 @@ multiWaitbar('Breast segmentation','Value',0.3);
 
 [mask, volumes, hFig] = segmentation_breast_2(dataR, col.Info{1,1}, net);
 
+SE = create_sphere(3);
+maskA = imdilate(mask, SE);
+
 multiWaitbar('Breast segmentation','Value', 0.9);
 pause(0.5)
 
